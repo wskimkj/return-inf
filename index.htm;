@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>주문 데이터 조회</title>
+
+  <!-- 폰트 -->
+  <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+
+  <!-- CSV 파서 -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top left, #f9a8d4 0, #e5e7eb 40%, #e0f2fe 100%);
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --border-soft: rgba(148, 163, 184, 0.5);
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --text-main: #0f172a;
+      --text-sub: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      padding: 32px 16px;
+      color: var(--text-main);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 24px 24px 20px;
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.12),
+        0 0 0 1px rgba(148, 163, 184, 0.35);
+      border: 1px solid rgba(248, 250, 252, 0.7);
+      backdrop-filter: blur(12px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .file-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .file-label {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .file-input {
+      font-size: 12px;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .search-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      .search-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .field input {
+      border-radius: 9px;
+      border: 1px solid var(--border-soft);
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+      background: rgba(248, 250, 252, 0.9);
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+      background: #ffffff;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .status {
+      font-size: 11px;
+      color: var(--text-sub);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .status-count {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .table-wrapper {
+      max-height: 420px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(248, 250, 252, 0.9);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(241, 245, 249, 0.98);
+      backdrop-filter: blur(6px);
+    }
+
+    th, td {
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      white-space: nowrap;
+    }
+
+    th {
+      font-size: 11px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    tbody tr:hover {
+      background: rgba(219, 234, 254, 0.7);
+    }
+
+    .no-data {
+      padding: 14px;
+      font-size: 12px;
+      color: var(--text-sub);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">
+            주문 데이터 조회
+            <span class="card-title-badge">DB 시트 연동</span>
+          </div>
+          <div class="card-subtitle">
+            주문번호, 수령인, 연락처 등 일부만 입력해도 해당 행 전체를 찾습니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- CSV 로드 설정 영역 -->
+      <div class="file-area">
+        <span class="file-label">데이터 CSV 파일:</span>
+        <input type="file" class="file-input" id="fileInput" accept=".csv" />
+      </div>
+      <div class="hint">
+        ※ 위 DB 시트를 “CSV로 다운로드” 한 뒤, 이 화면에서 파일을 선택해 주세요.
+      </div>
+
+      <!-- 검색 폼 -->
+      <div class="search-grid">
+        <div class="field">
+          <label for="orderNo">주문번호 (B)</label>
+          <input id="orderNo" type="text" placeholder="예: 12345">
+        </div>
+        <div class="field">
+          <label for="mall">쇼핑몰 (C)</label>
+          <input id="mall" type="text" placeholder="예: 스마트스토어">
+        </div>
+        <div class="field">
+          <label for="receiver">수령인 (D)</label>
+          <input id="receiver" type="text" placeholder="예: 홍길동">
+        </div>
+        <div class="field">
+          <label for="invoice">송장번호 (F)</label>
+          <input id="invoice" type="text" placeholder="예: 1234-5678-9012">
+        </div>
+        <div class="field">
+          <label for="phone">연락처 (G)</label>
+          <input id="phone" type="text" placeholder="숫자만/일부도 가능">
+        </div>
+        <div class="field">
+          <label for="product">상품명 (K)</label>
+          <input id="product" type="text" placeholder="예: 양말">
+        </div>
+        <div class="field">
+          <label for="colorCode">상품컬러코드 (S)</label>
+          <input id="colorCode" type="text" placeholder="예: BK, IV">
+        </div>
+        <div class="field">
+          <label for="amount">결제금액 (M)</label>
+          <input id="amount" type="text" placeholder="예: 15000">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="resetBtn">입력 초기화</button>
+        <button class="btn btn-primary" id="searchBtn" disabled>조회</button>
+      </div>
+
+      <div class="status">
+        <span id="loadStatus">CSV 파일을 먼저 선택해 주세요.</span>
+        <span id="resultCount"></span>
+      </div>
+
+      <div class="table-wrapper" id="tableWrapper">
+        <div class="no-data">데이터가 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let rawData = []; // CSV 전체 데이터 (헤더 포함)
+    let dataRows = []; // 실제 데이터부 (헤더 제외)
+
+    // DB 시트 컬럼 인덱스 매핑 (0부터 시작)
+    const COL = {
+      ORDER_NO: 1,   // B
+      MALL: 2,       // C
+      RECEIVER: 3,   // D
+      INVOICE: 5,    // F
+      PHONE: 6,      // G
+      PRODUCT: 10,   // K
+      QTY: 11,       // L
+      AMOUNT: 12,    // M
+      COLOR: 18      // S
+    };
+
+    const fileInput   = document.getElementById("fileInput");
+    const searchBtn   = document.getElementById("searchBtn");
+    const resetBtn    = document.getElementById("resetBtn");
+    const loadStatus  = document.getElementById("loadStatus");
+    const resultCount = document.getElementById("resultCount");
+    const tableWrapper= document.getElementById("tableWrapper");
+
+    const inputIds = [
+      "orderNo","mall","receiver","invoice",
+      "phone","product","colorCode","amount"
+    ];
+
+    // 공백/하이픈 제거용 (전화번호 등)
+    function onlyDigits(str) {
+      return (str || "").replace(/\D/g, "");
+    }
+
+    // 부분 포함 비교 (대소문자 무시)
+    function containsIgnoreCase(source, keyword) {
+      if (!keyword) return true; // 입력값이 비어있으면 필터조건 패스
+      if (source == null) return false;
+      return String(source).toLowerCase().includes(String(keyword).toLowerCase());
+    }
+
+    // CSV 파일 선택 시 파싱
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      loadStatus.textContent = "CSV 파싱 중...";
+      resultCount.textContent = "";
+      tableWrapper.innerHTML = '<div class="no-data">데이터를 불러오는 중입니다...</div>';
+      searchBtn.disabled = true;
+
+      Papa.parse(file, {
+        complete: (results) => {
+          rawData = results.data || [];
+          if (rawData.length <= 1) {
+            loadStatus.textContent = "유효한 데이터가 없습니다.";
+            tableWrapper.innerHTML = '<div class="no-data">유효한 데이터가 없습니다.</div>';
+            return;
+          }
+          // 첫 행은 헤더라고 가정
+          dataRows = rawData.slice(1).filter(row => row && row.length > 1);
+          loadStatus.textContent = `데이터 로드 완료 (총 ${dataRows.length}건). 조건 입력 후 [조회]를 눌러주세요.`;
+          searchBtn.disabled = false;
+          tableWrapper.innerHTML = '<div class="no-data">검색 조건을 입력한 뒤 조회 버튼을 눌러주세요.</div>';
+        },
+        error: (err) => {
+          console.error(err);
+          loadStatus.textContent = "CSV를 읽는 중 오류가 발생했습니다.";
+          tableWrapper.innerHTML = '<div class="no-data">CSV를 읽는 중 오류가 발생했습니다.</div>';
+        }
+      });
+    });
+
+    // 조회 버튼 클릭
+    searchBtn.addEventListener("click", () => {
+      if (!dataRows.length) return;
+
+      const values = {};
+      values.orderNo   = document.getElementById("orderNo").value.trim();
+      values.mall      = document.getElementById("mall").value.trim();
+      values.receiver  = document.getElementById("receiver").value.trim();
+      values.invoice   = document.getElementById("invoice").value.trim();
+      values.phone     = onlyDigits(document.getElementById("phone").value.trim());
+      values.product   = document.getElementById("product").value.trim();
+      values.colorCode = document.getElementById("colorCode").value.trim();
+      values.amount    = document.getElementById("amount").value.trim();
+
+      // 필터링
+      const filtered = dataRows.filter(row => {
+        if (!row || row.length === 0) return false;
+
+        const phoneCellDigits = onlyDigits(row[COL.PHONE]);
+
+        return (
+          containsIgnoreCase(row[COL.ORDER_NO], values.orderNo) &&
+          containsIgnoreCase(row[COL.MALL], values.mall) &&
+          containsIgnoreCase(row[COL.RECEIVER], values.receiver) &&
+          containsIgnoreCase(row[COL.INVOICE], values.invoice) &&
+          (values.phone ? phoneCellDigits.includes(values.phone) : true) &&
+          containsIgnoreCase(row[COL.PRODUCT], values.product) &&
+          containsIgnoreCase(row[COL.COLOR], values.colorCode) &&
+          containsIgnoreCase(row[COL.AMOUNT], values.amount)
+        );
+      });
+
+      renderTable(filtered);
+    });
+
+    // 입력 초기화
+    resetBtn.addEventListener("click", () => {
+      inputIds.forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      resultCount.textContent = "";
+      if (!dataRows.length) {
+        tableWrapper.innerHTML = '<div class="no-data">CSV 파일을 먼저 선택해 주세요.</div>';
+      } else {
+        tableWrapper.innerHTML = '<div class="no-data">검색 조건을 입력한 뒤 조회 버튼을 눌러주세요.</div>';
+      }
+    });
+
+    function renderTable(rows) {
+      if (!rows.length) {
+        resultCount.textContent = "검색 결과 0건";
+        tableWrapper.innerHTML = '<div class="no-data">조건에 맞는 데이터가 없습니다.</div>';
+        return;
+      }
+
+      resultCount.textContent = `검색 결과 ${rows.length}건`;
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>주문번호(B)</th>
+              <th>쇼핑몰(C)</th>
+              <th>수령인(D)</th>
+              <th>송장번호(F)</th>
+              <th>연락처(G)</th>
+              <th>상품명(K)</th>
+              <th>수량(L)</th>
+              <th>결제금액(M)</th>
+              <th>상품컬러코드(S)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      rows.forEach((row, idx) => {
+        html += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${row[COL.ORDER_NO] || ""}</td>
+            <td>${row[COL.MALL] || ""}</td>
+            <td>${row[COL.RECEIVER] || ""}</td>
+            <td>${row[COL.INVOICE] || ""}</td>
+            <td>${row[COL.PHONE] || ""}</td>
+            <td>${row[COL.PRODUCT] || ""}</td>
+            <td>${row[COL.QTY] || ""}</td>
+            <td>${row[COL.AMOUNT] || ""}</td>
+            <td>${row[COL.COLOR] || ""}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+      tableWrapper.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
