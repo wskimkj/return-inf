@@ -1,245 +1,163 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>주문 데이터 조회</title>
+<meta charset="UTF-8">
+<title>주문 데이터 조회</title>
 
-  <!-- 폰트 -->
-  <link rel="stylesheet" as="style" crossorigin
-        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<!-- 폰트 -->
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 
-  <!-- CSV 파서 -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- CSV 파서 -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <style>
-    :root {
-      --bg-gradient: radial-gradient(circle at top left, #f9a8d4 0, #e5e7eb 40%, #e0f2fe 100%);
-      --card-bg: rgba(255, 255, 255, 0.96);
-      --border-soft: rgba(148, 163, 184, 0.5);
-      --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.08);
-      --text-main: #0f172a;
-      --text-sub: #64748b;
-    }
+<style>
+:root {
+  --bg-gradient: radial-gradient(circle at top left, #f9a8d4 0, #e5e7eb 40%, #e0f2fe 100%);
+  --card-bg: rgba(255, 255, 255, 0.96);
+  --border-soft: rgba(148, 163, 184, 0.5);
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --text-main: #0f172a;
+  --text-sub: #64748b;
+}
 
-    * {
-      box-sizing: border-box;
-      font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg-gradient);
-      padding: 32px 16px;
-      color: var(--text-main);
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 18px;
-      padding: 24px 24px 20px;
-      box-shadow:
-        0 18px 45px rgba(15, 23, 42, 0.12),
-        0 0 0 1px rgba(148, 163, 184, 0.35);
-      border: 1px solid rgba(248, 250, 252, 0.7);
-      backdrop-filter: blur(12px);
-    }
-    .card-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:18px; }
-    .card-title { font-size:20px; font-weight:700; display:flex; gap:8px; align-items:center; }
-    .card-title-badge { font-size:11px; padding:3px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent); border:1px solid rgba(37,99,235,0.2);}
-    .card-subtitle { font-size:12px; color:var(--text-sub); }
-
-    .search-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
-    @media (max-width:900px){ .search-grid{grid-template-columns:repeat(2,1fr);} }
-    @media (max-width:600px){ .search-grid{grid-template-columns:1fr;} }
-
-    .field { display:flex; flex-direction:column; gap:4px; }
-    .field label { font-size:11px; color:var(--text-sub); }
-    .field input {
-      border-radius:9px; border:1px solid var(--border-soft); padding:6px 10px; font-size:12px;
-      outline:none; background:rgba(248,250,252,0.9);
-    }
-    .field input:focus {
-      border-color:var(--accent); box-shadow:0 0 0 1px rgba(37,99,235,0.2); background:#fff;
-    }
-
-    .actions { display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px; }
-    .btn { border-radius:999px; border:1px solid var(--border-soft); padding:6px 14px; font-size:12px; cursor:pointer; background:#fff; }
-    .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .btn:disabled { opacity:0.5; cursor:default; }
-
-    .status { font-size:11px; color:var(--text-sub); display:flex; justify-content:space-between; margin-bottom:8px; }
-    .status-count { font-weight:600; color:var(--accent); }
-
-    .table-wrapper {
-      max-height:420px; overflow:auto; border-radius:10px;
-      border:1px solid rgba(148,163,184,0.4); background:rgba(248,250,252,0.9);
-    }
-
-    table { width:100%; border-collapse:collapse; font-size:12px; }
-    thead { position:sticky; top:0; background:rgba(241,245,249,0.98); backdrop-filter:blur(6px); }
-    th, td { padding:6px 8px; border-bottom:1px solid rgba(226,232,240,0.8); }
-    tbody tr:nth-child(even) { background:rgba(255,255,255,0.8); }
-    tbody tr:hover { background:rgba(219,234,254,0.7); }
-    .no-data { padding:14px; text-align:center; font-size:12px; color:var(--text-sub); }
-  </style>
+*{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+body{margin:0;min-height:100vh;padding:32px 16px;color:var(--text-main);background:var(--bg-gradient);}
+.container{max-width:1200px;margin:0 auto;}
+.card{background:var(--card-bg);border-radius:18px;padding:24px 24px 20px;box-shadow:0 18px 45px rgba(15,23,42,0.12),0 0 0 1px rgba(148,163,184,0.35);border:1px solid rgba(248,250,252,0.7);backdrop-filter:blur(12px);}
+.card-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;}
+.card-title{font-size:20px;font-weight:700;display:flex;gap:8px;align-items:center;}
+.card-title-badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid rgba(37,99,235,0.2);}
+.card-subtitle{font-size:12px;color:var(--text-sub);}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;}
+.btn{border-radius:999px;border:1px solid var(--border-soft);padding:6px 14px;font-size:12px;cursor:pointer;background:#fff;}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn:disabled{opacity:0.5;cursor:default;}
+.status{font-size:11px;color:var(--text-sub);display:flex;justify-content:space-between;margin-bottom:8px;}
+.table-wrapper{max-height:420px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{position:sticky;top:0;background:rgba(241,245,249,0.98);backdrop-filter:blur(6px);}
+th,td{padding:6px 8px;border-bottom:1px solid rgba(226,232,240,0.8);}
+tbody tr:nth-child(even){background:rgba(255,255,255,0.8);}
+tbody tr:hover{background:rgba(219,234,254,0.7);}
+.no-data{padding:14px;text-align:center;font-size:12px;color:var(--text-sub);}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field input{border-radius:9px;border:1px solid var(--border-soft);padding:6px 10px;font-size:12px;outline:none;background:rgba(248,250,252,0.9);}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(37,99,235,0.2);background:#fff;}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">주문 데이터 조회 <span class="card-title-badge">실시간 DB</span></div>
-          <div class="card-subtitle">주문번호, 수령인, 연락처 등 일부만 입력해도 찾습니다.</div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn" id="resetBtn">입력 초기화</button>
-        <button class="btn btn-primary" id="searchBtn" disabled>조회</button>
-      </div>
-
-      <div class="status">
-        <span id="loadStatus">DB 데이터를 불러오는 중...</span>
-        <span id="resultCount"></span>
-      </div>
-
-      <div class="search-grid">
-        <div class="field">
-          <label>주문번호 (B)</label><input id="orderNo" type="text">
-        </div>
-        <div class="field">
-          <label>쇼핑몰 (C)</label><input id="mall" type="text">
-        </div>
-        <div class="field">
-          <label>수령인 (D)</label><input id="receiver" type="text">
-        </div>
-        <div class="field">
-          <label>송장번호 (F)</label><input id="invoice" type="text">
-        </div>
-        <div class="field">
-          <label>연락처 (G)</label><input id="phone" type="text">
-        </div>
-        <div class="field">
-          <label>상품명 (K)</label><input id="product" type="text">
-        </div>
-        <div class="field">
-          <label>상품컬러코드 (S)</label><input id="colorCode" type="text">
-        </div>
-        <div class="field">
-          <label>결제금액 (M)</label><input id="amount" type="text">
-        </div>
-      </div>
-
-      <div class="table-wrapper" id="tableWrapper">
-        <div class="no-data">데이터 로딩 중...</div>
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">주문 데이터 조회 <span class="card-title-badge">실시간 DB</span></div>
+        <div class="card-subtitle">검색창 1개에서 전체 데이터 검색 가능, 클릭 시 셀 복사</div>
       </div>
     </div>
+
+    <div class="field">
+      <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명 등 전체 검색">
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="resetBtn">입력 초기화</button>
+    </div>
+
+    <div class="status">
+      <span id="loadStatus">DB 데이터를 불러오는 중...</span>
+      <span id="resultCount"></span>
+    </div>
+
+    <div class="table-wrapper" id="tableWrapper">
+      <div class="no-data">데이터 로딩 중...</div>
+    </div>
   </div>
+</div>
 
 <script>
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
 
 let dataRows = [];
-
 const COL = {
   ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
   PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
 };
 
-function onlyDigits(str){ return (str||"").replace(/\D/g,""); }
-function contains(source, keyword){
-  if(!keyword) return true;
-  return String(source ?? "").toLowerCase().includes(String(keyword).toLowerCase());
-}
-
 // DB 로드
 async function loadData(){
-  const res = await fetch(CSV_URL);
-  const text = await res.text();
-  Papa.parse(text, {
-    complete: (results)=>{
-      dataRows = results.data.slice(1).filter(r=>r && r.length>1);
-      document.getElementById("loadStatus").textContent = `DB 로드 완료 (총 ${dataRows.length}건)`;
-      document.getElementById("searchBtn").disabled = false;
-      document.getElementById("tableWrapper").innerHTML = '<div class="no-data">검색 조건 입력 후 조회</div>';
-    }
-  });
+  try {
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    Papa.parse(text, {
+      complete: (results)=>{
+        dataRows = results.data.slice(1).filter(r=>r && r.length>1);
+        document.getElementById("loadStatus").textContent = `DB 로드 완료 (총 ${dataRows.length}건)`;
+        renderTable([]); // 초기 안내
+      }
+    });
+  } catch(err){
+    console.error(err);
+    document.getElementById("loadStatus").textContent = "DB 로드 실패";
+  }
 }
 loadData();
 
-document.getElementById("searchBtn").addEventListener("click",()=>{
-  const v = {
-    orderNo: document.getElementById("orderNo").value.trim(),
-    mall: document.getElementById("mall").value.trim(),
-    receiver: document.getElementById("receiver").value.trim(),
-    invoice: document.getElementById("invoice").value.trim(),
-    phone: onlyDigits(document.getElementById("phone").value.trim()),
-    product: document.getElementById("product").value.trim(),
-    colorCode: document.getElementById("colorCode").value.trim(),
-    amount: document.getElementById("amount").value.trim(),
-  };
-
-  const filtered = dataRows.filter(row=>{
-    const phoneDigits = onlyDigits(row[COL.PHONE]);
-    return (
-      contains(row[COL.ORDER_NO], v.orderNo) &&
-      contains(row[COL.MALL], v.mall) &&
-      contains(row[COL.RECEIVER], v.receiver) &&
-      contains(row[COL.INVOICE], v.invoice) &&
-      (v.phone ? phoneDigits.includes(v.phone) : true) &&
-      contains(row[COL.PRODUCT], v.product) &&
-      contains(row[COL.COLOR], v.colorCode) &&
-      contains(row[COL.AMOUNT], v.amount)
-    );
-  });
-
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", ()=>{
+  const keyword = searchInput.value.trim().toLowerCase();
+  if(!keyword){
+    renderTable([]);
+    return;
+  }
+  const filtered = dataRows.filter(row =>
+    row.join(" ").toLowerCase().includes(keyword)
+  );
   renderTable(filtered);
 });
 
-document.getElementById("resetBtn").addEventListener("click",()=>{
-  document.querySelectorAll(".field input").forEach(i=>i.value="");
-  document.getElementById("resultCount").textContent = "";
-  document.getElementById("tableWrapper").innerHTML =
-    '<div class="no-data">검색 조건 입력 후 조회</div>';
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  searchInput.value = "";
+  renderTable([]);
 });
 
 function renderTable(rows){
-  if(rows.length===0){
-    document.getElementById("resultCount").textContent = "검색 결과 0건";
-    document.getElementById("tableWrapper").innerHTML =
-      '<div class="no-data">조건에 맞는 데이터가 없습니다.</div>';
+  const tableWrapper = document.getElementById("tableWrapper");
+  const resultCount = document.getElementById("resultCount");
+  if(!rows || rows.length===0){
+    resultCount.textContent = "";
+    tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
     return;
   }
+  resultCount.textContent = `검색 결과 ${rows.length}건`;
 
-  document.getElementById("resultCount").textContent = `검색 결과 ${rows.length}건`;
-
-  let html = `
-  <table><thead><tr>
+  let html = `<table><thead><tr>
     <th>#</th><th>주문번호</th><th>쇼핑몰</th><th>수령인</th><th>송장번호</th>
-    <th>연락처</th><th>상품명</th><th>수량</th><th>금액</th><th>컬러코드</th>
-  </tr></thead><tbody>
-  `;
+    <th>연락처</th><th>상품명</th><th>수량</th><th>결제금액</th><th>컬러코드</th>
+  </tr></thead><tbody>`;
 
   rows.forEach((r,i)=>{
     html += `<tr>
-      <td>${i+1}</td><td>${r[COL.ORDER_NO]||""}</td>
-      <td>${r[COL.MALL]||""}</td><td>${r[COL.RECEIVER]||""}</td>
-      <td>${r[COL.INVOICE]||""}</td><td>${r[COL.PHONE]||""}</td>
-      <td>${r[COL.PRODUCT]||""}</td><td>${r[COL.QTY]||""}</td>
-      <td>${r[COL.AMOUNT]||""}</td><td>${r[COL.COLOR]||""}</td>
+      <td class="copy-cell">${i+1}</td><td class="copy-cell">${r[COL.ORDER_NO]||""}</td>
+      <td class="copy-cell">${r[COL.MALL]||""}</td><td class="copy-cell">${r[COL.RECEIVER]||""}</td>
+      <td class="copy-cell">${r[COL.INVOICE]||""}</td><td class="copy-cell">${r[COL.PHONE]||""}</td>
+      <td class="copy-cell">${r[COL.PRODUCT]||""}</td><td class="copy-cell">${r[COL.QTY]||""}</td>
+      <td class="copy-cell">${r[COL.AMOUNT]||""}</td><td class="copy-cell">${r[COL.COLOR]||""}</td>
     </tr>`;
   });
 
   html += `</tbody></table>`;
-  document.getElementById("tableWrapper").innerHTML = html;
+  tableWrapper.innerHTML = html;
+
+  // 셀 클릭 복사
+  tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
+    cell.addEventListener("click", ()=>{
+      navigator.clipboard.writeText(cell.textContent)
+        .then(()=>alert(`복사됨: ${cell.textContent}`))
+        .catch(err=>console.error(err));
+    });
+  });
 }
 </script>
 </body>
