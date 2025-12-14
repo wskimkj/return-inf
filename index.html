@@ -111,109 +111,86 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
   console.log("SCRIPT LOADED");
 
-  const { createClient } = supabase;
+  const sb = window.supabase.createClient(
+    "https://uavgqjijapwunjhpokmg.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4"
+  );
 
-  const supabaseUrl = "https://uavgqjijapwunjhpokmg.supabase.co";
-  const supabaseAnonKey = "네 anon 키";
-  const sb = createClient(supabaseUrl, supabaseAnonKey);
+  // DOM
+  const authState = document.getElementById("authState");
+  const authBox = document.getElementById("authBox");
+  const appBox = document.getElementById("appBox");
 
- <script>
-/* =====================
-   기본 세팅
-===================== */
-console.log("SCRIPT LOADED");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
+  const signupBtn = document.getElementById("signupBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const loadStatus = document.getElementById("loadStatus");
 
-const { createClient } = supabase;
+  async function refreshSessionUI() {
+    const { data: { session }, error } = await sb.auth.getSession();
+    if (error) console.error(error);
 
-const SUPABASE_URL = "https://uavgqjijapwunjhpokmg.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4";
-
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* =====================
-   DOM
-===================== */
-const authState = document.getElementById("authState");
-const authBox = document.getElementById("authBox");
-const appBox = document.getElementById("appBox");
-
-const emailEl = document.getElementById("email");
-const passEl = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const signupBtn = document.getElementById("signupBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
-const loadStatus = document.getElementById("loadStatus");
-
-/* =====================
-   Auth
-===================== */
-async function refreshSessionUI() {
-  const { data: { session } } = await sb.auth.getSession();
-
-  if (session?.user) {
-    authState.textContent = `로그인됨: ${session.user.email}`;
-    authBox.style.display = "none";
-    appBox.style.display = "block";
-    loadStatus.textContent = "로그인 완료";
-  } else {
-    authState.textContent = "로그인 필요";
-    authBox.style.display = "block";
-    appBox.style.display = "none";
-    loadStatus.textContent = "대기 중";
-  }
-}
-
-loginBtn.addEventListener("click", async () => {
-  loadStatus.textContent = "로그인 중...";
-  const email = emailEl.value.trim();
-  const password = passEl.value.trim();
-
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    alert("로그인 실패: " + error.message);
-    loadStatus.textContent = "로그인 실패";
-    return;
+    if (session?.user) {
+      authState.textContent = `로그인됨: ${session.user.email}`;
+      authBox.style.display = "none";
+      appBox.style.display = "block";
+      loadStatus.textContent = "로그인 완료";
+    } else {
+      authState.textContent = "로그인 필요";
+      authBox.style.display = "block";
+      appBox.style.display = "none";
+      loadStatus.textContent = "대기 중";
+    }
   }
 
-  await refreshSessionUI();
-});
+  loginBtn.addEventListener("click", async () => {
+    loadStatus.textContent = "로그인 중...";
+    const email = emailEl.value.trim();
+    const password = passEl.value.trim();
 
-signupBtn.addEventListener("click", async () => {
-  loadStatus.textContent = "회원가입 중...";
-  const email = emailEl.value.trim();
-  const password = passEl.value.trim();
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      console.error(error);
+      alert("로그인 실패: " + error.message);
+      loadStatus.textContent = "로그인 실패";
+      return;
+    }
+    await refreshSessionUI();
+  });
 
-  const { error } = await sb.auth.signUp({ email, password });
+  signupBtn.addEventListener("click", async () => {
+    loadStatus.textContent = "회원가입 중...";
+    const email = emailEl.value.trim();
+    const password = passEl.value.trim();
 
-  if (error) {
-    alert("회원가입 실패: " + error.message);
-    loadStatus.textContent = "회원가입 실패";
-    return;
-  }
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) {
+      console.error(error);
+      alert("회원가입 실패: " + error.message);
+      loadStatus.textContent = "회원가입 실패";
+      return;
+    }
+    alert("회원가입 완료! 이제 로그인하세요.");
+    loadStatus.textContent = "회원가입 완료";
+  });
 
-  alert("회원가입 완료! 이제 로그인하세요.");
-  loadStatus.textContent = "회원가입 완료";
-});
+  logoutBtn.addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await refreshSessionUI();
+  });
 
-logoutBtn.addEventListener("click", async () => {
-  await sb.auth.signOut();
-  await refreshSessionUI();
-});
-
-sb.auth.onAuthStateChange(() => refreshSessionUI());
-
-/* =====================
-   INIT
-===================== */
-refreshSessionUI();
+  sb.auth.onAuthStateChange(() => refreshSessionUI());
+  refreshSessionUI();
 </script>
+
+
+
 
 
 
