@@ -110,10 +110,14 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     </div>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
   console.log("SCRIPT LOADED");
+  alert("SCRIPT LOADED"); // 테스트용 (뜨면 무조건 실행된 거)
 
   const sb = window.supabase.createClient(
     "https://uavgqjijapwunjhpokmg.supabase.co",
@@ -188,6 +192,7 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
   sb.auth.onAuthStateChange(() => refreshSessionUI());
   refreshSessionUI();
 </script>
+
 
 
 
