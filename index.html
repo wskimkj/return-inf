@@ -31,14 +31,14 @@ body{margin:0;min-height:100vh;padding:32px 16px;color:var(--text-main);backgrou
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
 .btn:disabled{opacity:0.5;cursor:default;}
 .status{font-size:11px;color:var(--text-sub);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 10px;}
-.table-wrapper{max-height:520px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
+.table-wrapper{max-height:560px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 thead{position:sticky;top:0;background:rgba(241,245,249,0.98);backdrop-filter:blur(6px);}
 th,td{padding:6px 8px;border-bottom:1px solid rgba(226,232,240,0.8);vertical-align:top;}
 tbody tr:nth-child(even){background:rgba(255,255,255,0.8);}
 tbody tr:hover{background:rgba(219,234,254,0.7);}
 .no-data{padding:14px;text-align:center;font-size:12px;color:var(--text-sub);}
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
 .field input{border-radius:9px;border:1px solid var(--border-soft);padding:8px 10px;font-size:12px;outline:none;background:rgba(248,250,252,0.9);}
 .field input:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(37,99,235,0.2);background:#fff;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
@@ -54,19 +54,19 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     <div class="card-header">
       <div>
         <div class="card-title">정보 조회 <span class="card-title-badge">Supabase DB</span></div>
-        <div class="card-subtitle">로그인 없이 사용 (링크를 공유하지 마세요)</div>
+        <div class="card-subtitle">엑셀 업로드 → DB 저장(중복 덮어쓰기) → 검색</div>
       </div>
-      <div class="small">anon 모드</div>
+      <div class="small">로그인 없음(anon) · 링크 공유 금지</div>
     </div>
 
     <div class="grid">
       <div class="field">
-        <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명 등 검색 (Enter)" />
-        <div class="small">팁: 입력 후 <kbd>Enter</kbd> 또는 잠시 멈추면 자동 검색</div>
+        <input id="searchInput" type="text" placeholder="쇼핑몰주문번호/수령인/상품명/연락처/운송장번호 검색 후 Enter" />
+        <div class="small">검색은 <kbd>Enter</kbd>로만 실행</div>
       </div>
       <div class="field">
         <input id="fileInput" type="file" accept=".xlsx,.xls" />
-        <div class="small">엑셀 첫 행은 머릿글(헤더)</div>
+        <div class="small">1행=머릿글, 2행부터 데이터 · A열(출고일) 공란이어도 OK</div>
       </div>
     </div>
 
@@ -93,11 +93,13 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
+  // ✅ 너 프로젝트
   const sb = window.supabase.createClient(
     "https://uavgqjijapwunjhpokmg.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4"
   );
 
+  // DOM
   const searchInput = document.getElementById("searchInput");
   const fileInput = document.getElementById("fileInput");
   const uploadBtn = document.getElementById("uploadBtn");
@@ -107,23 +109,33 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
   const resultCount = document.getElementById("resultCount");
   const tableWrapper = document.getElementById("tableWrapper");
 
-  const SHABANG_HEADER_CANDIDATES = new Set([
-    "주문번호(샤방넷)",
-    "주문번호(사방넷)",
-    "사방넷주문번호",
-    "샤방넷주문번호",
-    "사방넷 주문번호",
-    "샤방넷 주문번호",
-    "주문번호"
-  ]);
+  // ✅ 네 엑셀 머릿글 그대로
+  const HDR = {
+    OUTBOUND_DATE: "출고일",
+    SHABANG: "주문번호(샤방넷)",     // DB 중복키(노출X)
+    MALL_ORDER: "주문번호(쇼핑몰)",   // 화면 노출/검색의 핵심
+    MALL: "쇼핑몰",
+    RECEIVER: "수령인",
+    INVOICE: "송장번호",
+    PHONE: "받는분연락처",
+    PRODUCT: "상품명",
+    QTY: "수량",
+    AMOUNT: "결제금액",
+    COLOR: "상품컬러코드"
+  };
 
-  function pickValue(rowObj, headerNames){
-    for (const h of headerNames){
-      if (rowObj[h] != null && String(rowObj[h]).trim() !== "") return rowObj[h];
-    }
-    return null;
+  function asText(v){
+    const s = String(v ?? "").trim();
+    return s === "" ? null : s;
   }
-
+  function asInt(v){
+    const n = Number(String(v ?? "").replaceAll(",", "").trim());
+    return Number.isFinite(n) ? n : null;
+  }
+  function asNum(v){
+    const n = Number(String(v ?? "").replaceAll(",", "").trim());
+    return Number.isFinite(n) ? n : null;
+  }
   function formatMoney(v){
     if (v == null || v === "") return "";
     const n = Number(String(v).replaceAll(",", ""));
@@ -139,19 +151,24 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     resultCount.textContent = `검색 결과 ${rows.length}건`;
 
     let html = `<table><thead><tr>
-      <th>#</th><th>사방넷주문번호</th><th>쇼핑몰</th><th>쇼핑몰주문번호</th><th>수령인</th>
-      <th>송장번호</th><th>연락처</th><th>상품명</th><th>수량</th><th>결제금액</th><th>컬러코드</th>
+      <th>#</th>
+      <th>쇼핑몰주문번호</th>
+      <th>수령인</th>
+      <th>연락처</th>
+      <th>운송장번호</th>
+      <th>상품명</th>
+      <th>수량</th>
+      <th>금액</th>
+      <th>상품컬러코드</th>
     </tr></thead><tbody>`;
 
     rows.forEach((r,i)=>{
       html += `<tr>
         <td class="copy-cell">${i+1}</td>
-        <td class="copy-cell">${r.shabang_order_no ?? ""}</td>
-        <td class="copy-cell">${r.mall ?? ""}</td>
         <td class="copy-cell">${r.mall_order_no ?? ""}</td>
         <td class="copy-cell">${r.receiver ?? ""}</td>
-        <td class="copy-cell">${r.invoice ?? ""}</td>
         <td class="copy-cell">${r.phone ?? ""}</td>
+        <td class="copy-cell">${r.invoice ?? ""}</td>
         <td class="copy-cell">${r.product ?? ""}</td>
         <td class="copy-cell">${r.qty ?? ""}</td>
         <td class="copy-cell">${formatMoney(r.amount)}</td>
@@ -173,7 +190,7 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     loadStatus.textContent = "최근 데이터 불러오는 중...";
     const { data, error } = await sb
       .from("orders")
-      .select("shabang_order_no, mall, mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
+      .select("mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
       .order("updated_at", { ascending: false })
       .limit(200);
 
@@ -187,25 +204,27 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     renderTable(data);
   }
 
-  let searchTimer = null;
   async function runSearch(){
     const keyword = searchInput.value.trim();
     if (!keyword){
       await fetchRecent();
       return;
     }
+    if (keyword.length < 2){
+      loadStatus.textContent = "2글자 이상 입력 후 Enter";
+      return;
+    }
+
     loadStatus.textContent = "검색 중...";
     const k = keyword.replaceAll("%","").replaceAll(","," ").trim();
 
     const { data, error } = await sb
       .from("orders")
-      .select("shabang_order_no, mall, mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
+      .select("mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
       .or([
-        `shabang_order_no.ilike.%${k}%`,
+        `mall_order_no.ilike.%${k}%`,
         `receiver.ilike.%${k}%`,
         `product.ilike.%${k}%`,
-        `mall.ilike.%${k}%`,
-        `mall_order_no.ilike.%${k}%`,
         `invoice.ilike.%${k}%`,
         `phone.ilike.%${k}%`,
         `color_code.ilike.%${k}%`
@@ -219,17 +238,15 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
       renderTable([]);
       return;
     }
-    loadStatus.textContent = `검색 완료`;
+    loadStatus.textContent = "검색 완료";
     renderTable(data);
   }
 
-  searchInput.addEventListener("input", ()=>{
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(runSearch, 250);
-  });
+  // 검색은 Enter로만
   searchInput.addEventListener("keydown", (e)=>{
     if (e.key === "Enter") runSearch();
   });
+
   resetBtn.addEventListener("click", async ()=>{
     searchInput.value = "";
     await fetchRecent();
@@ -257,58 +274,59 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
         return;
       }
 
+      // 머릿글 검증: 주문번호(샤방넷) 필수
       const headers = Object.keys(rows[0] || {}).map(h => String(h).trim());
-      const shabangHeader = headers.find(h => SHABANG_HEADER_CANDIDATES.has(h));
-      if (!shabangHeader){
-        alert("엑셀 머릿글에 '주문번호(샤방넷)'(또는 유사 표기)이 있어야 합니다.");
+      if (!headers.includes(HDR.SHABANG)){
+        alert(`머릿글에 '${HDR.SHABANG}' 컬럼이 없습니다. (엑셀 양식 확인)`);
         loadStatus.textContent = "머릿글 인식 실패";
         return;
       }
 
       const mapped = [];
       for (const r of rows){
-        const shabang = String(r[shabangHeader] ?? "").trim();
+        const shabang = asText(r[HDR.SHABANG]);       // ✅ 중복키
         if (!shabang) continue;
 
         mapped.push({
-          shabang_order_no: shabang,
-          mall: String(pickValue(r, ["쇼핑몰"]) ?? "").trim() || null,
-          mall_order_no: String(pickValue(r, ["쇼핑몰 주문번호(필수)", "쇼핑몰 주문번호"]) ?? "").trim() || null,
-          receiver: String(pickValue(r, ["수령인", "수취인", "받는분"]) ?? "").trim() || null,
-          phone: String(pickValue(r, ["받는분연락처", "연락처", "전화번호"]) ?? "").trim() || null,
-          invoice: String(pickValue(r, ["송장번호", "운송장번호"]) ?? "").trim() || null,
-          product: String(pickValue(r, ["상품명", "상품"]) ?? "").trim() || null,
-          qty: (() => {
-            const v = pickValue(r, ["수량"]);
-            const n = Number(String(v).replaceAll(",", "").trim());
-            return Number.isFinite(n) ? n : null;
-          })(),
-          amount: (() => {
-            const v = pickValue(r, ["결제금액", "금액", "총 결제금액"]);
-            const n = Number(String(v).replaceAll(",", "").trim());
-            return Number.isFinite(n) ? n : null;
-          })(),
-          color_code: String(pickValue(r, ["상품컬러코드", "컬러코드", "색상코드"]) ?? "").trim() || null,
+          shabang_order_no: shabang,                  // ✅ 중복 덮어쓰기 기준
+          outbound_date: asText(r[HDR.OUTBOUND_DATE]),
+          mall: asText(r[HDR.MALL]),
+          mall_order_no: asText(r[HDR.MALL_ORDER]),   // ✅ 쇼핑몰주문번호 저장
+          receiver: asText(r[HDR.RECEIVER]),
+          phone: asText(r[HDR.PHONE]),
+          invoice: asText(r[HDR.INVOICE]),
+          product: asText(r[HDR.PRODUCT]),
+          qty: asInt(r[HDR.QTY]),
+          amount: asNum(r[HDR.AMOUNT]),
+          color_code: asText(r[HDR.COLOR]),
           raw: r,
           updated_at: new Date().toISOString()
         });
       }
 
       if (!mapped.length){
-        loadStatus.textContent = "저장할 행이 없습니다(주문번호 비어있음).";
+        loadStatus.textContent = "저장할 행이 없습니다(주문번호(샤방넷) 비어있음).";
         return;
       }
 
-      loadStatus.textContent = `DB 저장 중... (${mapped.length}행 / 중복 덮어쓰기)`;
-      const { error } = await sb
-        .from("orders")
-        .upsert(mapped, { onConflict: "shabang_order_no" });
+      // 대용량 안정 업로드(500행씩)
+      const CHUNK = 500;
+      loadStatus.textContent = `DB 저장 중... 0/${mapped.length}`;
 
-      if (error){
-        console.error(error);
-        alert("DB 저장 실패: " + error.message);
-        loadStatus.textContent = "DB 저장 실패";
-        return;
+      for (let i = 0; i < mapped.length; i += CHUNK){
+        const part = mapped.slice(i, i + CHUNK);
+        loadStatus.textContent = `DB 저장 중... ${Math.min(i + part.length, mapped.length)}/${mapped.length}`;
+
+        const { error } = await sb
+          .from("orders")
+          .upsert(part, { onConflict: "shabang_order_no" });
+
+        if (error) {
+          console.error(error);
+          alert("DB 저장 실패: " + error.message);
+          loadStatus.textContent = "DB 저장 실패";
+          return;
+        }
       }
 
       alert(`저장 완료! (${mapped.length}행 처리)`);
@@ -324,7 +342,7 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     }
   });
 
-  // 첫 화면: 최근 200건 자동 로드(원하면 주석처리)
+  // 첫 화면: 최근 200건
   fetchRecent();
 </script>
 
