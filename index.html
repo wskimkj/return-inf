@@ -110,344 +110,112 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-<script type="module">
-console.log("SCRIPT LOADED");
-window.__supabase_test = supabase;
+<script>
+  console.log("SCRIPT LOADED");
 
-  
-  // 1) Supabase
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-  // 2) Excel parser (SheetJS)
-  import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+  const { createClient } = supabase;
 
   const supabaseUrl = "https://uavgqjijapwunjhpokmg.supabase.co";
-  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const supabaseAnonKey = "네 anon 키";
+  const sb = createClient(supabaseUrl, supabaseAnonKey);
 
-  // --- DOM
-  const authState = document.getElementById("authState");
-  const authBox = document.getElementById("authBox");
-  const appBox = document.getElementById("appBox");
+ <script>
+/* =====================
+   기본 세팅
+===================== */
+console.log("SCRIPT LOADED");
 
-  const emailEl = document.getElementById("email");
-  const passEl = document.getElementById("password");
-  const loginBtn = document.getElementById("loginBtn");
-  const signupBtn = document.getElementById("signupBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+const { createClient } = supabase;
 
-  const searchInput = document.getElementById("searchInput");
-  const fileInput = document.getElementById("fileInput");
-  const uploadBtn = document.getElementById("uploadBtn");
-  const refreshBtn = document.getElementById("refreshBtn");
-  const resetBtn = document.getElementById("resetBtn");
+const SUPABASE_URL = "https://uavgqjijapwunjhpokmg.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4";
 
-  const loadStatus = document.getElementById("loadStatus");
-  const resultCount = document.getElementById("resultCount");
-  const tableWrapper = document.getElementById("tableWrapper");
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // --- helpers
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const setStatus = (msg) => loadStatus.textContent = msg;
+/* =====================
+   DOM
+===================== */
+const authState = document.getElementById("authState");
+const authBox = document.getElementById("authBox");
+const appBox = document.getElementById("appBox");
 
-  function normHeader(s){
-    return String(s ?? "").trim();
+const emailEl = document.getElementById("email");
+const passEl = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const loadStatus = document.getElementById("loadStatus");
+
+/* =====================
+   Auth
+===================== */
+async function refreshSessionUI() {
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (session?.user) {
+    authState.textContent = `로그인됨: ${session.user.email}`;
+    authBox.style.display = "none";
+    appBox.style.display = "block";
+    loadStatus.textContent = "로그인 완료";
+  } else {
+    authState.textContent = "로그인 필요";
+    authBox.style.display = "block";
+    appBox.style.display = "none";
+    loadStatus.textContent = "대기 중";
+  }
+}
+
+loginBtn.addEventListener("click", async () => {
+  loadStatus.textContent = "로그인 중...";
+  const email = emailEl.value.trim();
+  const password = passEl.value.trim();
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    alert("로그인 실패: " + error.message);
+    loadStatus.textContent = "로그인 실패";
+    return;
   }
 
-  // 사방넷 주문번호 헤더 후보(엑셀마다 표기 흔들릴 수 있어서 대비)
-  const SHABANG_HEADER_CANDIDATES = new Set([
-    "주문번호(샤방넷)",
-    "주문번호(사방넷)",
-    "사방넷주문번호",
-    "샤방넷주문번호",
-    "사방넷 주문번호",
-    "샤방넷 주문번호",
-    "주문번호"
-  ]);
-
-  function pickValue(rowObj, headerNames){
-    for (const h of headerNames){
-      if (rowObj[h] != null && String(rowObj[h]).trim() !== "") return rowObj[h];
-    }
-    return null;
-  }
-
-  function formatMoney(v){
-    if (v == null || v === "") return "";
-    const n = Number(String(v).replaceAll(",", ""));
-    if (Number.isFinite(n)) return n.toLocaleString("ko-KR");
-    return String(v);
-  }
-
-  function renderTable(rows){
-    if(!rows || rows.length===0){
-      resultCount.textContent = "";
-      tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
-      return;
-    }
-    resultCount.textContent = `검색 결과 ${rows.length}건`;
-
-    let html = `<table><thead><tr>
-      <th>#</th>
-      <th>사방넷 주문번호</th>
-      <th>쇼핑몰</th>
-      <th>쇼핑몰 주문번호</th>
-      <th>수령인</th>
-      <th>송장번호</th>
-      <th>연락처</th>
-      <th>상품명</th>
-      <th>수량</th>
-      <th>결제금액</th>
-      <th>컬러코드</th>
-    </tr></thead><tbody>`;
-
-    rows.forEach((r,i)=>{
-      html += `<tr>
-        <td class="copy-cell">${i+1}</td>
-        <td class="copy-cell">${r.shabang_order_no ?? ""}</td>
-        <td class="copy-cell">${r.mall ?? ""}</td>
-        <td class="copy-cell">${r.mall_order_no ?? ""}</td>
-        <td class="copy-cell">${r.receiver ?? ""}</td>
-        <td class="copy-cell">${r.invoice ?? ""}</td>
-        <td class="copy-cell">${r.phone ?? ""}</td>
-        <td class="copy-cell">${r.product ?? ""}</td>
-        <td class="copy-cell">${r.qty ?? ""}</td>
-        <td class="copy-cell">${formatMoney(r.amount)}</td>
-        <td class="copy-cell">${r.color_code ?? ""}</td>
-      </tr>`;
-    });
-
-    html += `</tbody></table>`;
-    tableWrapper.innerHTML = html;
-
-    tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
-      cell.addEventListener("click", ()=>{
-        navigator.clipboard.writeText(cell.textContent).catch(()=>{});
-      });
-    });
-  }
-
-  async function fetchRecent(){
-    setStatus("최근 데이터 불러오는 중...");
-    const { data, error } = await supabase
-      .from("orders")
-      .select("shabang_order_no, mall, mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(200);
-
-    if (error) {
-      console.error(error);
-      setStatus("불러오기 실패(권한/로그인/RLS 확인)");
-      renderTable([]);
-      return;
-    }
-    setStatus(`불러오기 완료 (최근 ${data.length}건)`);
-    renderTable(data);
-  }
-
-  let searchTimer = null;
-  async function runSearch(){
-    const keyword = searchInput.value.trim();
-    if (!keyword){
-      await fetchRecent();
-      return;
-    }
-    setStatus("검색 중...");
-    const k = keyword.replaceAll("%","").replaceAll(","," ").trim();
-
-    // 여러 컬럼 OR 검색 (DB에서 처리)
-    const { data, error } = await supabase
-      .from("orders")
-      .select("shabang_order_no, mall, mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
-      .or([
-        `shabang_order_no.ilike.%${k}%`,
-        `receiver.ilike.%${k}%`,
-        `product.ilike.%${k}%`,
-        `mall.ilike.%${k}%`,
-        `mall_order_no.ilike.%${k}%`,
-        `invoice.ilike.%${k}%`,
-        `phone.ilike.%${k}%`,
-        `color_code.ilike.%${k}%`
-      ].join(","))
-      .order("updated_at", { ascending: false })
-      .limit(200);
-
-    if (error){
-      console.error(error);
-      setStatus("검색 실패");
-      renderTable([]);
-      return;
-    }
-    setStatus(`검색 완료`);
-    renderTable(data);
-  }
-
-  // --- Auth
-  async function refreshSessionUI(){
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user){
-      authState.textContent = `로그인됨: ${session.user.email}`;
-      authBox.style.display = "none";
-      appBox.style.display = "block";
-      await fetchRecent();
-    } else {
-      authState.textContent = "로그인 필요";
-      authBox.style.display = "block";
-      appBox.style.display = "none";
-      tableWrapper.innerHTML = '<div class="no-data">로그인 후 데이터를 불러오세요.</div>';
-      setStatus("대기 중");
-      resultCount.textContent = "";
-    }
-  }
-
-  loginBtn.addEventListener("click", async ()=>{
-    setStatus("로그인 중...");
-    const email = emailEl.value.trim();
-    const password = passEl.value.trim();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error){
-      console.error(error);
-      setStatus("로그인 실패(이메일/비번 확인)");
-      return;
-    }
-    setStatus("로그인 완료");
-    await refreshSessionUI();
-  });
-
-  signupBtn.addEventListener("click", async ()=>{
-    setStatus("회원가입 중...");
-    const email = emailEl.value.trim();
-    const password = passEl.value.trim();
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error){
-      console.error(error);
-      setStatus("회원가입 실패(이미 가입/비번 규칙 등)");
-      return;
-    }
-    setStatus("회원가입 완료! 이제 로그인 해주세요.");
-  });
-
-  logoutBtn.addEventListener("click", async ()=>{
-    await supabase.auth.signOut();
-    await refreshSessionUI();
-  });
-
-  supabase.auth.onAuthStateChange(() => refreshSessionUI());
-
-  // --- Search UX
-  searchInput.addEventListener("input", ()=>{
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(runSearch, 250);
-  });
-  searchInput.addEventListener("keydown", (e)=>{
-    if (e.key === "Enter") runSearch();
-  });
-  resetBtn.addEventListener("click", async ()=>{
-    searchInput.value = "";
-    await fetchRecent();
-  });
-  refreshBtn.addEventListener("click", fetchRecent);
-
-  // --- Excel Upload → Upsert
-  uploadBtn.addEventListener("click", async ()=>{
-    const file = fileInput.files?.[0];
-    if (!file){
-      alert("엑셀 파일(.xlsx)을 선택해 주세요.");
-      return;
-    }
-
-    setStatus("엑셀 읽는 중...");
-    uploadBtn.disabled = true;
-
-    try {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-
-      const sheetName = wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName];
-
-      // header: 1 -> 첫 행을 key로 하는 객체 배열
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
-
-      if (!rows.length){
-        setStatus("엑셀에 데이터가 없습니다.");
-        return;
-      }
-
-      // 실제 헤더명 목록
-      const headers = Object.keys(rows[0] || {}).map(normHeader);
-
-      // 사방넷 주문번호 컬럼 찾기
-      const shabangHeader = headers.find(h => SHABANG_HEADER_CANDIDATES.has(h));
-      if (!shabangHeader){
-        setStatus("엑셀에서 '주문번호(샤방넷)' 컬럼을 찾지 못했습니다.");
-        alert("엑셀 머릿글에 '주문번호(샤방넷)'(또는 유사 표기)이 있어야 합니다.");
-        return;
-      }
-
-      // 매핑(너 엑셀에서 자주 쓰는 필드들)
-      const mapped = [];
-      for (const r of rows){
-        const shabang = String(r[shabangHeader] ?? "").trim();
-        if (!shabang) continue; // 주문번호 없으면 저장 불가(중복키라서)
-
-        mapped.push({
-          shabang_order_no: shabang,
-          mall: String(pickValue(r, ["쇼핑몰"]) ?? "").trim() || null,
-          mall_order_no: String(pickValue(r, ["쇼핑몰 주문번호(필수)", "쇼핑몰주문번호", "쇼핑몰 주문번호"]) ?? "").trim() || null,
-          receiver: String(pickValue(r, ["수령인", "받는분", "수취인"]) ?? "").trim() || null,
-          phone: String(pickValue(r, ["받는분연락처", "연락처", "수령인 연락처", "전화번호"]) ?? "").trim() || null,
-          invoice: String(pickValue(r, ["송장번호", "운송장번호"]) ?? "").trim() || null,
-          product: String(pickValue(r, ["상품명", "상품"]) ?? "").trim() || null,
-          qty: (() => {
-            const v = pickValue(r, ["수량"]);
-            const n = Number(String(v).replaceAll(",", "").trim());
-            return Number.isFinite(n) ? n : null;
-          })(),
-          amount: (() => {
-            const v = pickValue(r, ["결제금액", "금액", "총 결제금액"]);
-            const n = Number(String(v).replaceAll(",", "").trim());
-            return Number.isFinite(n) ? n : null;
-          })(),
-          color_code: String(pickValue(r, ["상품컬러코드", "컬러코드", "색상코드"]) ?? "").trim() || null,
-          raw: r,
-          updated_at: new Date().toISOString()
-        });
-      }
-
-      if (!mapped.length){
-        setStatus("저장할 행이 없습니다(주문번호가 비어있음).");
-        return;
-      }
-
-      setStatus(`DB 저장 중... (${mapped.length}행, 중복 자동 덮어쓰기)`);
-      // upsert: unique(shabang_order_no) 기준
-      const { error } = await supabase
-        .from("orders")
-        .upsert(mapped, { onConflict: "shabang_order_no" });
-
-      if (error){
-        console.error(error);
-        setStatus("DB 저장 실패(권한/RLS/로그인 확인)");
-        alert("DB 저장 실패. 콘솔 오류를 확인하세요.");
-        return;
-      }
-
-      setStatus(`저장 완료! (${mapped.length}행 처리)`);
-      await sleep(200);
-      await fetchRecent();
-
-    } catch (e){
-      console.error(e);
-      setStatus("업로드 처리 중 오류");
-      alert("엑셀 처리 중 오류가 발생했습니다. 콘솔을 확인해 주세요.");
-    } finally {
-      uploadBtn.disabled = false;
-    }
-  });
-
-  // init
   await refreshSessionUI();
+});
+
+signupBtn.addEventListener("click", async () => {
+  loadStatus.textContent = "회원가입 중...";
+  const email = emailEl.value.trim();
+  const password = passEl.value.trim();
+
+  const { error } = await sb.auth.signUp({ email, password });
+
+  if (error) {
+    alert("회원가입 실패: " + error.message);
+    loadStatus.textContent = "회원가입 실패";
+    return;
+  }
+
+  alert("회원가입 완료! 이제 로그인하세요.");
+  loadStatus.textContent = "회원가입 완료";
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await sb.auth.signOut();
+  await refreshSessionUI();
+});
+
+sb.auth.onAuthStateChange(() => refreshSessionUI());
+
+/* =====================
+   INIT
+===================== */
+refreshSessionUI();
 </script>
+
+
+
 </body>
 </html>
