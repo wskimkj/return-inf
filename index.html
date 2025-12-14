@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>정보 조회 - Supabase</title>
+<meta charset="UTF-8">
+<title>발주서</title>
+      
+<link rel="icon" type="image/png" href="android-icon-48x48.ico">
 
+<!-- 폰트 -->
 <link rel="stylesheet" as="style" crossorigin
-  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+
+<!-- CSV 파서 -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 :root {
@@ -18,333 +23,143 @@
   --text-main: #0f172a;
   --text-sub: #64748b;
 }
+
 *{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 body{margin:0;min-height:100vh;padding:32px 16px;color:var(--text-main);background:var(--bg-gradient);}
 .container{max-width:1200px;margin:0 auto;}
 .card{background:var(--card-bg);border-radius:18px;padding:24px 24px 20px;box-shadow:0 18px 45px rgba(15,23,42,0.12),0 0 0 1px rgba(148,163,184,0.35);border:1px solid rgba(248,250,252,0.7);backdrop-filter:blur(12px);}
-.card-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;}
 .card-title{font-size:20px;font-weight:700;display:flex;gap:8px;align-items:center;}
 .card-title-badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid rgba(37,99,235,0.2);}
 .card-subtitle{font-size:12px;color:var(--text-sub);}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;}
 .btn{border-radius:999px;border:1px solid var(--border-soft);padding:6px 14px;font-size:12px;cursor:pointer;background:#fff;}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
 .btn:disabled{opacity:0.5;cursor:default;}
-.status{font-size:11px;color:var(--text-sub);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 10px;}
-.table-wrapper{max-height:560px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
+.status{font-size:11px;color:var(--text-sub);display:flex;justify-content:space-between;margin-bottom:8px;}
+.table-wrapper{max-height:420px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 thead{position:sticky;top:0;background:rgba(241,245,249,0.98);backdrop-filter:blur(6px);}
-th,td{padding:6px 8px;border-bottom:1px solid rgba(226,232,240,0.8);vertical-align:top;}
+th,td{padding:6px 8px;border-bottom:1px solid rgba(226,232,240,0.8);}
 tbody tr:nth-child(even){background:rgba(255,255,255,0.8);}
 tbody tr:hover{background:rgba(219,234,254,0.7);}
 .no-data{padding:14px;text-align:center;font-size:12px;color:var(--text-sub);}
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
-.field input{border-radius:9px;border:1px solid var(--border-soft);padding:8px 10px;font-size:12px;outline:none;background:rgba(248,250,252,0.9);}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.field input{border-radius:9px;border:1px solid var(--border-soft);padding:6px 10px;font-size:12px;outline:none;background:rgba(248,250,252,0.9);}
 .field input:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(37,99,235,0.2);background:#fff;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-@media (max-width: 720px){ .grid{grid-template-columns:1fr;} }
-.small{font-size:11px;color:var(--text-sub);}
-kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:11px;background:rgba(15,23,42,0.06);border:1px solid rgba(148,163,184,0.35);padding:2px 6px;border-radius:6px;}
 </style>
 </head>
-
 <body>
 <div class="container">
   <div class="card">
     <div class="card-header">
       <div>
-        <div class="card-title">정보 조회 <span class="card-title-badge">Supabase DB</span></div>
-        <div class="card-subtitle">엑셀 업로드 → DB 저장(중복 덮어쓰기) → 검색</div>
+        <div class="card-title">정보 조회 <span class="card-title-badge">실시간 DB</span></div>
+        <div class="card-subtitle"> </div>
       </div>
-      <div class="small">로그인 없음(anon) · 링크 공유 금지</div>
     </div>
 
-    <div class="grid">
-      <div class="field">
-        <input id="searchInput" type="text" placeholder="쇼핑몰주문번호/수령인/상품명/연락처/운송장번호 검색 후 Enter" />
-        <div class="small">검색은 <kbd>Enter</kbd>로만 실행</div>
-      </div>
-      <div class="field">
-        <input id="fileInput" type="file" accept=".xlsx,.xls" />
-        <div class="small">1행=머릿글, 2행부터 데이터 · A열(출고일) 공란이어도 OK</div>
-      </div>
+    <div class="field">
+      <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명 등 전체 검색">
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary" id="uploadBtn">엑셀 업로드(중복 덮어쓰기)</button>
-      <button class="btn" id="refreshBtn">최근 200건</button>
-      <button class="btn" id="resetBtn">검색 초기화</button>
+      <button class="btn" id="resetBtn">입력 초기화</button>
     </div>
 
     <div class="status">
-      <span id="loadStatus">대기 중</span>
+      <span id="loadStatus">DB 데이터를 불러오는 중...</span>
       <span id="resultCount"></span>
     </div>
 
     <div class="table-wrapper" id="tableWrapper">
-      <div class="no-data">최근 200건을 불러오거나 검색하세요.</div>
+      <div class="no-data">데이터 로딩 중...</div>
     </div>
   </div>
 </div>
 
-<!-- Supabase UMD -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- SheetJS -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-
 <script>
-  // ✅ 너 프로젝트
-  const sb = window.supabase.createClient(
-    "https://uavgqjijapwunjhpokmg.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhdmdxamlqYXB3dW5qaHBva21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2ODUzMTUsImV4cCI6MjA4MTI2MTMxNX0.JkQpf3RoPaDXVUNV_YrvzXs28uHtYQMwn5GZPNJzTv4"
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
+
+let dataRows = [];
+const COL = {
+  ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
+  PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
+};
+
+// DB 로드
+async function loadData(){
+  try {
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    Papa.parse(text, {
+      complete: (results)=>{
+        dataRows = results.data.slice(1).filter(r=>r && r.length>1);
+        document.getElementById("loadStatus").textContent = `DB 로드 완료 (총 ${dataRows.length}건)`;
+        renderTable([]);
+      }
+    });
+  } catch(err){
+    console.error(err);
+    document.getElementById("loadStatus").textContent = "DB 로드 실패";
+  }
+}
+loadData();
+
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", ()=>{
+  const keyword = searchInput.value.trim().toLowerCase();
+  if(!keyword){
+    renderTable([]);
+    return;
+  }
+  const filtered = dataRows.filter(row =>
+    row.join(" ").toLowerCase().includes(keyword)
   );
+  renderTable(filtered);
+});
 
-  // DOM
-  const searchInput = document.getElementById("searchInput");
-  const fileInput = document.getElementById("fileInput");
-  const uploadBtn = document.getElementById("uploadBtn");
-  const refreshBtn = document.getElementById("refreshBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const loadStatus = document.getElementById("loadStatus");
-  const resultCount = document.getElementById("resultCount");
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  searchInput.value = "";
+  renderTable([]);
+});
+
+function renderTable(rows){
   const tableWrapper = document.getElementById("tableWrapper");
-
-  // ✅ 네 엑셀 머릿글 그대로
-  const HDR = {
-    OUTBOUND_DATE: "출고일",
-    SHABANG: "주문번호(샤방넷)",     // DB 중복키(노출X)
-    MALL_ORDER: "주문번호(쇼핑몰)",   // 화면 노출/검색의 핵심
-    MALL: "쇼핑몰",
-    RECEIVER: "수령인",
-    INVOICE: "송장번호",
-    PHONE: "받는분연락처",
-    PRODUCT: "상품명",
-    QTY: "수량",
-    AMOUNT: "결제금액",
-    COLOR: "상품컬러코드"
-  };
-
-  function asText(v){
-    const s = String(v ?? "").trim();
-    return s === "" ? null : s;
+  const resultCount = document.getElementById("resultCount");
+  if(!rows || rows.length===0){
+    resultCount.textContent = "";
+    tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
+    return;
   }
-  function asInt(v){
-    const n = Number(String(v ?? "").replaceAll(",", "").trim());
-    return Number.isFinite(n) ? n : null;
-  }
-  function asNum(v){
-    const n = Number(String(v ?? "").replaceAll(",", "").trim());
-    return Number.isFinite(n) ? n : null;
-  }
-  function formatMoney(v){
-    if (v == null || v === "") return "";
-    const n = Number(String(v).replaceAll(",", ""));
-    return Number.isFinite(n) ? n.toLocaleString("ko-KR") : String(v);
-  }
+  resultCount.textContent = `검색 결과 ${rows.length}건`;
 
-  function renderTable(rows){
-    if(!rows || rows.length===0){
-      resultCount.textContent = "";
-      tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
-      return;
-    }
-    resultCount.textContent = `검색 결과 ${rows.length}건`;
+  let html = `<table><thead><tr>
+    <th>#</th><th>주문번호</th><th>쇼핑몰</th><th>수령인</th><th>송장번호</th>
+    <th>연락처</th><th>상품명</th><th>수량</th><th>결제금액</th><th>컬러코드</th>
+  </tr></thead><tbody>`;
 
-    let html = `<table><thead><tr>
-      <th>#</th>
-      <th>쇼핑몰주문번호</th>
-      <th>수령인</th>
-      <th>연락처</th>
-      <th>운송장번호</th>
-      <th>상품명</th>
-      <th>수량</th>
-      <th>금액</th>
-      <th>상품컬러코드</th>
-    </tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    html += `<tr>
+      <td class="copy-cell">${i+1}</td><td class="copy-cell">${r[COL.ORDER_NO]||""}</td>
+      <td class="copy-cell">${r[COL.MALL]||""}</td><td class="copy-cell">${r[COL.RECEIVER]||""}</td>
+      <td class="copy-cell">${r[COL.INVOICE]||""}</td><td class="copy-cell">${r[COL.PHONE]||""}</td>
+      <td class="copy-cell">${r[COL.PRODUCT]||""}</td><td class="copy-cell">${r[COL.QTY]||""}</td>
+      <td class="copy-cell">${r[COL.AMOUNT]||""}</td><td class="copy-cell">${r[COL.COLOR]||""}</td>
+    </tr>`;
+  });
 
-    rows.forEach((r,i)=>{
-      html += `<tr>
-        <td class="copy-cell">${i+1}</td>
-        <td class="copy-cell">${r.mall_order_no ?? ""}</td>
-        <td class="copy-cell">${r.receiver ?? ""}</td>
-        <td class="copy-cell">${r.phone ?? ""}</td>
-        <td class="copy-cell">${r.invoice ?? ""}</td>
-        <td class="copy-cell">${r.product ?? ""}</td>
-        <td class="copy-cell">${r.qty ?? ""}</td>
-        <td class="copy-cell">${formatMoney(r.amount)}</td>
-        <td class="copy-cell">${r.color_code ?? ""}</td>
-      </tr>`;
+  html += `</tbody></table>`;
+  tableWrapper.innerHTML = html;
+
+  // 셀 클릭 시 바로 복사
+  tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
+    cell.addEventListener("click", ()=>{
+      navigator.clipboard.writeText(cell.textContent)
+        .catch(err=>console.error(err));
     });
-
-    html += `</tbody></table>`;
-    tableWrapper.innerHTML = html;
-
-    tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
-      cell.addEventListener("click", ()=>{
-        navigator.clipboard.writeText(cell.textContent).catch(()=>{});
-      });
-    });
-  }
-
-  async function fetchRecent(){
-    loadStatus.textContent = "최근 데이터 불러오는 중...";
-    const { data, error } = await sb
-      .from("orders")
-      .select("mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(200);
-
-    if (error) {
-      console.error(error);
-      loadStatus.textContent = "불러오기 실패(RLS/정책 확인)";
-      renderTable([]);
-      return;
-    }
-    loadStatus.textContent = `불러오기 완료 (최근 ${data.length}건)`;
-    renderTable(data);
-  }
-
-  async function runSearch(){
-    const keyword = searchInput.value.trim();
-    if (!keyword){
-      await fetchRecent();
-      return;
-    }
-    if (keyword.length < 2){
-      loadStatus.textContent = "2글자 이상 입력 후 Enter";
-      return;
-    }
-
-    loadStatus.textContent = "검색 중...";
-    const k = keyword.replaceAll("%","").replaceAll(","," ").trim();
-
-    const { data, error } = await sb
-      .from("orders")
-      .select("mall_order_no, receiver, phone, invoice, product, qty, amount, color_code, updated_at")
-      .or([
-        `mall_order_no.ilike.%${k}%`,
-        `receiver.ilike.%${k}%`,
-        `product.ilike.%${k}%`,
-        `invoice.ilike.%${k}%`,
-        `phone.ilike.%${k}%`,
-        `color_code.ilike.%${k}%`
-      ].join(","))
-      .order("updated_at", { ascending: false })
-      .limit(200);
-
-    if (error){
-      console.error(error);
-      loadStatus.textContent = "검색 실패";
-      renderTable([]);
-      return;
-    }
-    loadStatus.textContent = "검색 완료";
-    renderTable(data);
-  }
-
-  // 검색은 Enter로만
-  searchInput.addEventListener("keydown", (e)=>{
-    if (e.key === "Enter") runSearch();
   });
-
-  resetBtn.addEventListener("click", async ()=>{
-    searchInput.value = "";
-    await fetchRecent();
-  });
-  refreshBtn.addEventListener("click", fetchRecent);
-
-  uploadBtn.addEventListener("click", async ()=>{
-    const file = fileInput.files?.[0];
-    if (!file){
-      alert("엑셀 파일(.xlsx)을 선택해 주세요.");
-      return;
-    }
-
-    uploadBtn.disabled = true;
-    loadStatus.textContent = "엑셀 읽는 중...";
-
-    try{
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
-
-      if (!rows.length){
-        loadStatus.textContent = "엑셀에 데이터가 없습니다.";
-        return;
-      }
-
-      // 머릿글 검증: 주문번호(샤방넷) 필수
-      const headers = Object.keys(rows[0] || {}).map(h => String(h).trim());
-      if (!headers.includes(HDR.SHABANG)){
-        alert(`머릿글에 '${HDR.SHABANG}' 컬럼이 없습니다. (엑셀 양식 확인)`);
-        loadStatus.textContent = "머릿글 인식 실패";
-        return;
-      }
-
-      const mapped = [];
-      for (const r of rows){
-        const shabang = asText(r[HDR.SHABANG]);       // ✅ 중복키
-        if (!shabang) continue;
-
-        mapped.push({
-          shabang_order_no: shabang,                  // ✅ 중복 덮어쓰기 기준
-          outbound_date: asText(r[HDR.OUTBOUND_DATE]),
-          mall: asText(r[HDR.MALL]),
-          mall_order_no: asText(r[HDR.MALL_ORDER]),   // ✅ 쇼핑몰주문번호 저장
-          receiver: asText(r[HDR.RECEIVER]),
-          phone: asText(r[HDR.PHONE]),
-          invoice: asText(r[HDR.INVOICE]),
-          product: asText(r[HDR.PRODUCT]),
-          qty: asInt(r[HDR.QTY]),
-          amount: asNum(r[HDR.AMOUNT]),
-          color_code: asText(r[HDR.COLOR]),
-          raw: r,
-          updated_at: new Date().toISOString()
-        });
-      }
-
-      if (!mapped.length){
-        loadStatus.textContent = "저장할 행이 없습니다(주문번호(샤방넷) 비어있음).";
-        return;
-      }
-
-      // 대용량 안정 업로드(500행씩)
-      const CHUNK = 500;
-      loadStatus.textContent = `DB 저장 중... 0/${mapped.length}`;
-
-      for (let i = 0; i < mapped.length; i += CHUNK){
-        const part = mapped.slice(i, i + CHUNK);
-        loadStatus.textContent = `DB 저장 중... ${Math.min(i + part.length, mapped.length)}/${mapped.length}`;
-
-        const { error } = await sb
-          .from("orders")
-          .upsert(part, { onConflict: "shabang_order_no" });
-
-        if (error) {
-          console.error(error);
-          alert("DB 저장 실패: " + error.message);
-          loadStatus.textContent = "DB 저장 실패";
-          return;
-        }
-      }
-
-      alert(`저장 완료! (${mapped.length}행 처리)`);
-      loadStatus.textContent = `저장 완료 (${mapped.length}행)`;
-      await fetchRecent();
-
-    } catch(e){
-      console.error(e);
-      alert("업로드 처리 오류. 콘솔(F12)을 확인해 주세요.");
-      loadStatus.textContent = "업로드 오류";
-    } finally{
-      uploadBtn.disabled = false;
-    }
-  });
-
-  // 첫 화면: 최근 200건
-  fetchRecent();
+}
 </script>
-
 </body>
 </html>
