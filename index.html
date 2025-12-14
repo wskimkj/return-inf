@@ -113,7 +113,7 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
   console.log("SCRIPT LOADED");
@@ -134,6 +134,9 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
   const signupBtn = document.getElementById("signupBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const loadStatus = document.getElementById("loadStatus");
+  const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+
 
   async function refreshSessionUI() {
     const { data: { session }, error } = await sb.auth.getSession();
@@ -190,6 +193,122 @@ kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mo
 
   sb.auth.onAuthStateChange(() => refreshSessionUI());
   refreshSessionUI();
+
+
+
+  // 사방넷 주문번호 헤더 후보
+const SHABANG_HEADER_CANDIDATES = new Set([
+  "주문번호(샤방넷)",
+  "주문번호(사방넷)",
+  "사방넷주문번호",
+  "샤방넷주문번호",
+  "사방넷 주문번호",
+  "샤방넷 주문번호",
+  "주문번호"
+]);
+
+function pickValue(rowObj, headerNames){
+  for (const h of headerNames){
+    if (rowObj[h] != null && String(rowObj[h]).trim() !== "") return rowObj[h];
+  }
+  return null;
+}
+
+uploadBtn.addEventListener("click", async () => {
+  const file = fileInput.files?.[0];
+  if (!file) {
+    alert("엑셀 파일(.xlsx)을 먼저 선택해 주세요.");
+    return;
+  }
+
+  uploadBtn.disabled = true;
+  loadStatus.textContent = "엑셀 읽는 중...";
+
+  try {
+    // 1) 엑셀 읽기
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+
+    // 첫 행을 머릿글로 해서 객체 배열 생성
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
+
+    if (!rows.length) {
+      loadStatus.textContent = "엑셀에 데이터가 없습니다.";
+      return;
+    }
+
+    // 2) 사방넷 주문번호 컬럼 찾기
+    const headers = Object.keys(rows[0] || {});
+    const shabangHeader = headers.find(h => SHABANG_HEADER_CANDIDATES.has(String(h).trim()));
+
+    if (!shabangHeader) {
+      alert("엑셀 머릿글에 '주문번호(샤방넷)'(또는 유사 표기)이 있어야 합니다.");
+      loadStatus.textContent = "머릿글(주문번호) 인식 실패";
+      return;
+    }
+
+    // 3) DB에 넣을 형태로 매핑
+    const mapped = [];
+    for (const r of rows) {
+      const shabang = String(r[shabangHeader] ?? "").trim();
+      if (!shabang) continue;
+
+      mapped.push({
+        shabang_order_no: shabang, // UNIQUE 키
+        mall: String(pickValue(r, ["쇼핑몰"]) ?? "").trim() || null,
+        mall_order_no: String(pickValue(r, ["쇼핑몰 주문번호(필수)", "쇼핑몰 주문번호"]) ?? "").trim() || null,
+        receiver: String(pickValue(r, ["수령인", "수취인", "받는분"]) ?? "").trim() || null,
+        phone: String(pickValue(r, ["받는분연락처", "연락처", "전화번호"]) ?? "").trim() || null,
+        invoice: String(pickValue(r, ["송장번호", "운송장번호"]) ?? "").trim() || null,
+        product: String(pickValue(r, ["상품명", "상품"]) ?? "").trim() || null,
+        qty: (() => {
+          const v = pickValue(r, ["수량"]);
+          const n = Number(String(v).replaceAll(",", "").trim());
+          return Number.isFinite(n) ? n : null;
+        })(),
+        amount: (() => {
+          const v = pickValue(r, ["결제금액", "금액"]);
+          const n = Number(String(v).replaceAll(",", "").trim());
+          return Number.isFinite(n) ? n : null;
+        })(),
+        color_code: String(pickValue(r, ["상품컬러코드", "컬러코드"]) ?? "").trim() || null,
+        raw: r,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    if (!mapped.length) {
+      loadStatus.textContent = "저장할 행이 없습니다(주문번호 비어있음).";
+      return;
+    }
+
+    // 4) upsert(중복 자동 덮어쓰기)
+    loadStatus.textContent = `DB 저장 중... (${mapped.length}행 / 중복 자동 덮어쓰기)`;
+
+    const { error } = await sb
+      .from("orders")
+      .upsert(mapped, { onConflict: "shabang_order_no" });
+
+    if (error) {
+      console.error(error);
+      alert("DB 저장 실패: " + error.message);
+      loadStatus.textContent = "DB 저장 실패";
+      return;
+    }
+
+    alert(`저장 완료! (${mapped.length}행 처리)`);
+    loadStatus.textContent = `저장 완료 (${mapped.length}행)`;
+
+  } catch (e) {
+    console.error(e);
+    alert("업로드 처리 중 오류가 발생했습니다. 콘솔(F12)을 확인해 주세요.");
+    loadStatus.textContent = "업로드 오류";
+  } finally {
+    uploadBtn.disabled = false;
+  }
+});
+
 </script>
 
 
