@@ -11,35 +11,39 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
-/* ========= Neon Glass Theme ========= */
+/* ===================== Neon Pink Glass Theme (UX/기능 그대로) ===================== */
 :root{
-  --bg: #070A14;
-  --bg2:#050711;
+  --bg: #0b0610;
+  --bg2:#09040d;
 
-  --glass: rgba(255,255,255,.06);
-  --glass2: rgba(255,255,255,.09);
-  --stroke: rgba(255,255,255,.12);
+  --glass: rgba(255,255,255,.08);
+  --glass2: rgba(255,255,255,.12);
+  --stroke: rgba(255,180,200,.35);
 
-  --text: rgba(255,255,255,.92);
-  --sub: rgba(255,255,255,.62);
+  --text: rgba(255,255,255,.96);
+  --sub: rgba(255,255,255,.65);
   --muted: rgba(255,255,255,.45);
 
-  --cyan: #3FE3FF;
-  --mag: #B95CFF;
-  --lime:#37FFB2;
+  --neon-pink: #ff6fae;
+  --neon-hot: #ff3f8e;
+  --neon-soft: #ff9fc6;
+  --neon-purple: #c77dff;
+  --neon-lime: #37ffb2;
 
-  --shadow: 0 24px 70px rgba(0,0,0,.55);
-  --shadow2: 0 16px 40px rgba(0,0,0,.45);
+  --shadow-main: 0 30px 80px rgba(0,0,0,.65);
+  --shadow-card: 0 16px 46px rgba(0,0,0,.55);
+  --shadow-glow: 0 0 44px rgba(255,111,174,.32);
 }
 
 *{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 html,body{height:100%;}
 body{
   margin:0;
-  background: radial-gradient(1200px 700px at 20% 10%, rgba(63,227,255,.10), transparent 60%),
-              radial-gradient(900px 600px at 80% 30%, rgba(185,92,255,.11), transparent 55%),
-              radial-gradient(1000px 700px at 50% 90%, rgba(55,255,178,.08), transparent 60%),
-              linear-gradient(180deg, var(--bg), var(--bg2));
+  background:
+    radial-gradient(900px 600px at 15% 15%, rgba(255,111,174,.18), transparent 60%),
+    radial-gradient(900px 600px at 85% 25%, rgba(199,125,255,.16), transparent 55%),
+    radial-gradient(1000px 700px at 50% 90%, rgba(255,159,198,.14), transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
   color:var(--text);
   overflow-x:hidden;
 }
@@ -50,27 +54,28 @@ body{
   padding: 34px 18px 44px;
 }
 
-/* subtle neon blobs */
+/* neon blobs */
 .glow{
   position:fixed;
   inset:-20%;
   pointer-events:none;
-  filter: blur(60px);
-  opacity:.25;
+  filter: blur(64px);
+  opacity:.22;
   z-index:0;
 }
 .glow::before,
 .glow::after{
   content:"";
   position:absolute;
-  width:520px;height:520px;border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, rgba(63,227,255,.9), transparent 55%);
+  width:560px;height:560px;border-radius:50%;
   left:8%; top:14%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,111,174,.95), transparent 58%);
 }
 .glow::after{
-  width:560px;height:560px;
-  background: radial-gradient(circle at 30% 30%, rgba(185,92,255,.9), transparent 55%);
+  width:620px;height:620px;
   right:10%; top:18%;
+  left:auto;
+  background: radial-gradient(circle at 30% 30%, rgba(199,125,255,.92), transparent 60%);
 }
 
 /* top bar */
@@ -84,11 +89,7 @@ body{
   margin-bottom:14px;
 }
 
-.brand{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
+.brand{display:flex;flex-direction:column;gap:6px;}
 .brand-title{
   display:flex;
   align-items:center;
@@ -101,10 +102,10 @@ body{
   font-size:11px;
   padding:4px 10px;
   border-radius:999px;
-  background: linear-gradient(90deg, rgba(63,227,255,.18), rgba(185,92,255,.18));
-  border:1px solid rgba(255,255,255,.14);
-  color: rgba(255,255,255,.88);
-  box-shadow: 0 0 0 1px rgba(63,227,255,.08) inset;
+  background: linear-gradient(90deg, rgba(255,111,174,.18), rgba(199,125,255,.16));
+  border:1px solid rgba(255,180,200,.35);
+  color: rgba(255,255,255,.90);
+  box-shadow: 0 0 0 1px rgba(255,111,174,.10) inset;
 }
 .brand-sub{
   font-size:12px;
@@ -125,35 +126,52 @@ body{
   box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
 }
 .dot.live{
-  background: var(--lime);
+  background: var(--neon-lime);
   box-shadow: 0 0 14px rgba(55,255,178,.55), 0 0 0 1px rgba(55,255,178,.22) inset;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,180,200,.25);
+}
+
+.kbd{
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,180,200,.28);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.75);
 }
 
 /* glass card */
 .card{
   position:relative;
   z-index:1;
-  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
-  border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border: 1px solid var(--stroke);
   border-radius: 18px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-main), var(--shadow-glow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   overflow:hidden;
 }
 .card::before{
   content:"";
   position:absolute; inset:-2px;
-  background: radial-gradient(900px 240px at 10% 0%, rgba(63,227,255,.22), transparent 60%),
-              radial-gradient(900px 240px at 90% 0%, rgba(185,92,255,.20), transparent 55%),
-              radial-gradient(800px 220px at 50% 120%, rgba(55,255,178,.12), transparent 60%);
+  background:
+    radial-gradient(900px 240px at 10% 0%, rgba(255,111,174,.22), transparent 60%),
+    radial-gradient(900px 240px at 90% 0%, rgba(199,125,255,.18), transparent 55%),
+    radial-gradient(800px 220px at 50% 120%, rgba(255,159,198,.10), transparent 60%);
   pointer-events:none;
   opacity:.75;
 }
-.card-inner{
-  position:relative;
-  padding: 18px 18px 14px;
-}
+.card-inner{position:relative;padding: 18px 18px 14px;}
 
 /* search */
 .search-row{
@@ -171,16 +189,20 @@ body{
   padding: 12px 14px;
   border-radius: 14px;
   background: rgba(0,0,0,.22);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.22) inset, var(--shadow2);
+  border: 1px solid rgba(255,180,200,.22);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22) inset, var(--shadow-card);
 }
 .search:focus-within{
-  border-color: rgba(63,227,255,.35);
-  box-shadow: 0 0 0 1px rgba(63,227,255,.25) inset, 0 0 0 4px rgba(63,227,255,.10), var(--shadow2);
+  border-color: var(--neon-pink);
+  box-shadow:
+    0 0 0 1px rgba(255,111,174,.45),
+    0 0 0 6px rgba(255,111,174,.18),
+    0 0 28px rgba(255,63,142,.45),
+    var(--shadow-card);
 }
 .search-icon{
-  width:18px;height:18px;opacity:.85;flex:0 0 auto;
-  filter: drop-shadow(0 0 8px rgba(63,227,255,.25));
+  width:18px;height:18px;opacity:.9;flex:0 0 auto;
+  filter: drop-shadow(0 0 10px rgba(255,111,174,.25));
 }
 .search input{
   width:100%;
@@ -190,15 +212,6 @@ body{
   font-size:13px;
 }
 .search input::placeholder{color:rgba(255,255,255,.45);}
-
-.kbd{
-  font-size:11px;
-  padding:4px 8px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.72);
-}
 
 /* status */
 .status-row{
@@ -210,21 +223,11 @@ body{
   font-size:12px;
   color:var(--sub);
 }
-.status-row strong{color:rgba(255,255,255,.88);font-weight:700;}
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-}
 
 /* table */
 .table-wrap{
   border-radius:14px;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(255,180,200,.22);
   overflow:auto;
   background: rgba(0,0,0,.18);
   box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
@@ -242,56 +245,47 @@ thead th{
   z-index:2;
   text-align:left;
   padding:10px 12px;
-  background: rgba(7,10,20,.82);
+  background: rgba(10,7,18,.82);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.88);
+  border-bottom: 1px solid rgba(255,180,200,.22);
+  color: rgba(255,255,255,.90);
   font-weight:700;
   user-select:none;
   cursor:pointer;
 }
-thead th:first-child{border-top-left-radius:14px;}
+thead th:first-child{border-top-left-radius:14px; cursor:default;}
 thead th:last-child{border-top-right-radius:14px;}
 
 tbody td{
   padding:10px 12px;
   border-bottom:1px solid rgba(255,255,255,.07);
-  color: rgba(255,255,255,.84);
+  color: rgba(255,255,255,.86);
 }
-tbody tr{
-  background: rgba(255,255,255,.02);
-}
-tbody tr:nth-child(even){
-  background: rgba(255,255,255,.03);
-}
+tbody tr{background: rgba(255,255,255,.02);}
+tbody tr:nth-child(even){background: rgba(255,255,255,.03);}
 tbody tr:hover{
-  background: linear-gradient(90deg, rgba(63,227,255,.08), rgba(185,92,255,.06));
-}
-.copy{
-  cursor:pointer;
-}
-.copy:active{
-  transform: translateY(0.5px);
+  background: linear-gradient(90deg, rgba(255,111,174,.18), rgba(199,125,255,.14));
 }
 
-.sort-ind{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-}
+.copy{cursor:pointer;}
+.copy:active{transform: translateY(0.5px);}
+
+.sort-ind{display:inline-flex;align-items:center;gap:6px;}
 .sort-dot{
   width:6px;height:6px;border-radius:50%;
   background: rgba(255,255,255,.22);
   box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
 }
 .sort-dot.on{
-  background: var(--cyan);
-  box-shadow: 0 0 14px rgba(63,227,255,.55), 0 0 0 1px rgba(63,227,255,.22) inset;
+  background: var(--neon-pink);
+  box-shadow:
+    0 0 14px rgba(255,111,174,.9),
+    0 0 0 1px rgba(255,111,174,.45) inset;
 }
 .arrow{
   font-size:11px;
-  opacity:.9;
-  color: rgba(255,255,255,.78);
+  opacity:.95;
+  color: var(--neon-soft);
 }
 
 .no-data{
@@ -309,21 +303,20 @@ tbody tr:hover{
   z-index:9999;
   padding:10px 12px;
   border-radius:14px;
-  background: rgba(0,0,0,.58);
-  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.55);
+  border:1px solid rgba(255,111,174,.45);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: rgba(255,255,255,.92);
-  box-shadow: 0 18px 60px rgba(0,0,0,.55), 0 0 30px rgba(63,227,255,.12);
+  box-shadow:
+    0 18px 60px rgba(0,0,0,.6),
+    0 0 36px rgba(255,111,174,.45);
   opacity:0;
   transform: translateY(10px);
   transition: .18s ease;
   pointer-events:none;
 }
-#toast.show{
-  opacity:1;
-  transform: translateY(0);
-}
+#toast.show{opacity:1;transform: translateY(0);}
 
 /* responsive */
 @media (max-width: 760px){
@@ -344,12 +337,11 @@ tbody tr:hover{
         정보 조회
         <span class="pill">Neon Glass</span>
       </div>
-      <div class="brand-sub">주문번호 · 수령인 · 상품명 등 통합 검색 / 헤더 클릭 정렬 / 셀 클릭 복사</div>
     </div>
 
     <div class="meta">
       <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
-      <span class="badge"><strong id="resultCount"> </strong></span>
+      <span class="badge"><strong id="resultCount"></strong></span>
       <span class="kbd">Esc</span>
     </div>
   </div>
@@ -358,20 +350,19 @@ tbody tr:hover{
     <div class="card-inner">
       <div class="search-row">
         <div class="search">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="rgba(255,255,255,.78)" stroke-width="1.8"/>
-            <path d="M16.5 16.5 21 21" stroke="rgba(63,227,255,.85)" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M16.5 16.5 21 21" stroke="rgba(255,111,174,.95)" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
-          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명… (검색어 입력)" autocomplete="off" />
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" autocomplete="off" />
         </div>
         <div class="kbd" title="입력창에서 Esc를 누르면 초기화">Esc 초기화</div>
       </div>
 
       <div class="status-row">
-        <div id="cacheHint"> </div>
+        <div id="cacheHint"></div>
         <div style="display:flex; gap:10px; align-items:center;">
-          <span style="color:var(--muted);">정렬: 헤더 클릭</span>
-          <span style="color:var(--muted);">복사: 셀 클릭</span>
+    
         </div>
       </div>
 
@@ -448,14 +439,13 @@ function toNumber(v){
   return Number(n) || 0;
 }
 
-function setHeaderStatus(text, isLive=true){
+function setHeaderStatus(text){
   $("loadStatus").textContent = text;
-  // dot live style is static; keep simple
 }
 
 function setCacheHint(text){
-  $("cacheHint").textContent = text;
-  $("cacheHint").style.color = text.includes("캐시") ? "rgba(255,255,255,.60)" : "rgba(255,255,255,.0)";
+  $("cacheHint").textContent = text || "";
+  $("cacheHint").style.color = text ? "rgba(255,255,255,.62)" : "rgba(255,255,255,0)";
 }
 
 /* ===================== Data Load ===================== */
@@ -494,8 +484,9 @@ async function loadData(){
       return;
     }
 
-    setHeaderStatus("DB 로드 실패 (캐시 없음)", false);
-    $("tableWrapper").innerHTML = '<div class="no-data">데이터를 불러오지 못했습니다. 네트워크/구글시트 상태를 확인하세요.</div>';
+    setHeaderStatus("DB 로드 실패");
+    $("tableWrapper").innerHTML =
+      '<div class="no-data">데이터를 불러오지 못했습니다.</div>';
   }
 }
 loadData();
@@ -511,7 +502,6 @@ function applySearchAndSort(){
   if(keyword){
     filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
   }else{
-    // 검색어 없으면 표 비움 (원래 동작 유지)
     renderTable([]);
     return;
   }
@@ -523,12 +513,10 @@ function applySearchAndSort(){
       const av = a[k] ?? "";
       const bv = b[k] ?? "";
 
-      // 숫자 정렬 우선 시도 (수량/금액/숫자열)
-      const an = toNumber(av);
-      const bn = toNumber(bv);
-      const bothNumeric = (String(av).match(/[0-9]/) && String(bv).match(/[0-9]/)) && (k === COL.QTY || k === COL.AMOUNT);
-
-      if(bothNumeric) return (an - bn) * dir;
+      // 수량/금액은 숫자 정렬
+      if(k === COL.QTY || k === COL.AMOUNT){
+        return (toNumber(av) - toNumber(bv)) * dir;
+      }
       return String(av).localeCompare(String(bv), "ko") * dir;
     });
   }
@@ -616,7 +604,6 @@ function renderTable(rows){
     cell.addEventListener("click", ()=>{
       const text = cell.textContent.trim();
       navigator.clipboard.writeText(text)
-        .then(()=>showToast("복사됨"))
         .catch(()=>showToast("복사 실패"));
     });
   });
@@ -627,7 +614,8 @@ function renderTable(rows){
       const key = Number(th.dataset.sort);
       if(sortState.key === key) sortState.dir *= -1;
       else sortState = { key, dir: 1 };
-      // 검색어가 없으면 정렬할 의미 없으니 그대로
+
+      // 검색어 없으면 표 비움 유지
       if(!searchInput.value.trim()){
         renderTable([]);
         return;
