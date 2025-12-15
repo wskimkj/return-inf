@@ -1,3 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>발주서</title>
+
+<link rel="icon" type="image/png" href="android-icon-48x48.ico" />
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<style>
 /* ===================== Pastel Pink UI Theme (디자인만 교체 / 기능 그대로) ===================== */
 :root{
   /* background */
@@ -321,3 +334,307 @@ tbody tr:hover{
   .meta{white-space:normal}
   .table-wrap{max-height: 68vh;}
 }
+
+</style>
+</head>
+
+<body>
+<div class="glow"></div>
+
+<div class="container">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-title">
+        정보 조회
+        <span class="pill">Neon Glass</span>
+      </div>
+    </div>
+
+    <div class="meta">
+      <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
+      <span class="badge"><strong id="resultCount"></strong></span>
+      <span class="kbd">Esc</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-inner">
+      <div class="search-row">
+        <div class="search">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="rgba(255,255,255,.78)" stroke-width="1.8"/>
+            <path d="M16.5 16.5 21 21" stroke="rgba(255,111,174,.95)" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" autocomplete="off" />
+        </div>
+        <div class="kbd" title="입력창에서 Esc를 누르면 초기화">Esc 초기화</div>
+      </div>
+
+      <div class="status-row">
+        <div id="cacheHint"></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+    
+        </div>
+      </div>
+
+      <div class="table-wrap" id="tableWrapper">
+        <div class="no-data">데이터 로딩 중…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">복사됨</div>
+
+<script>
+/* ===================== Config ===================== */
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
+
+const COL = {
+  ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
+  PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
+};
+
+let dataRows = [];
+let sortState = { key: null, dir: 1 };
+
+/* ===================== Cache (Local) ===================== */
+const CACHE_KEY = "order_csv_cache_v2";
+const CACHE_TIME_KEY = "order_csv_cache_time_v2";
+const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
+
+async function fetchWithTimeout(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(url, { signal: controller.signal });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return await res.text();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function saveCache(csvText){
+  try{
+    localStorage.setItem(CACHE_KEY, csvText);
+    localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+  }catch(e){
+    console.warn("캐시 저장 실패:", e);
+  }
+}
+function readCache(){
+  const csvText = localStorage.getItem(CACHE_KEY);
+  const ts = Number(localStorage.getItem(CACHE_TIME_KEY) || 0);
+  if(!csvText) return null;
+  return { csvText, ts };
+}
+function isCacheFresh(ts){ return (Date.now() - ts) <= CACHE_TTL_MS; }
+
+/* ===================== UI Helpers ===================== */
+const $ = (id)=>document.getElementById(id);
+
+function debounce(fn, wait=180){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+
+function showToast(msg="복사됨"){
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"), 850);
+}
+
+function toNumber(v){
+  const n = String(v ?? "").replace(/[^0-9.-]/g,"");
+  return Number(n) || 0;
+}
+
+function setHeaderStatus(text){
+  $("loadStatus").textContent = text;
+}
+
+function setCacheHint(text){
+  $("cacheHint").textContent = text || "";
+  $("cacheHint").style.color = text ? "rgba(255,255,255,.62)" : "rgba(255,255,255,0)";
+}
+
+/* ===================== Data Load ===================== */
+async function loadData(){
+  setHeaderStatus("DB 로딩 중...");
+  setCacheHint("");
+
+  const cached = readCache();
+
+  try{
+    const csvText = await fetchWithTimeout(CSV_URL, 8000);
+    saveCache(csvText);
+
+    Papa.parse(csvText, {
+      complete: (results)=>{
+        dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+        setHeaderStatus(`DB 로드 완료 · ${dataRows.length.toLocaleString()}건`);
+        renderTable([]); // 검색 전엔 비움
+      }
+    });
+  }catch(err){
+    console.error(err);
+
+    if(cached){
+      const when = new Date(cached.ts).toLocaleString();
+      const freshness = isCacheFresh(cached.ts) ? "캐시(최신)" : "캐시(오래됨)";
+      setHeaderStatus(`DB 오류 → ${freshness}로 조회`);
+      setCacheHint(`캐시 사용 중 · 저장 시각: ${when}`);
+
+      Papa.parse(cached.csvText, {
+        complete: (results)=>{
+          dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+          renderTable([]);
+        }
+      });
+      return;
+    }
+
+    setHeaderStatus("DB 로드 실패");
+    $("tableWrapper").innerHTML =
+      '<div class="no-data">데이터를 불러오지 못했습니다.</div>';
+  }
+}
+loadData();
+
+/* ===================== Search + Sort ===================== */
+const searchInput = $("searchInput");
+let currentRows = [];
+
+function applySearchAndSort(){
+  const keyword = searchInput.value.trim().toLowerCase();
+
+  let filtered = dataRows;
+  if(keyword){
+    filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
+  }else{
+    renderTable([]);
+    return;
+  }
+
+  if(sortState.key != null){
+    const k = sortState.key;
+    const dir = sortState.dir;
+    filtered = [...filtered].sort((a,b)=>{
+      const av = a[k] ?? "";
+      const bv = b[k] ?? "";
+
+      // 수량/금액은 숫자 정렬
+      if(k === COL.QTY || k === COL.AMOUNT){
+        return (toNumber(av) - toNumber(bv)) * dir;
+      }
+      return String(av).localeCompare(String(bv), "ko") * dir;
+    });
+  }
+
+  currentRows = filtered;
+  renderTable(currentRows);
+}
+
+searchInput.addEventListener("input", debounce(applySearchAndSort, 180));
+searchInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    searchInput.value = "";
+    sortState = { key: null, dir: 1 };
+    renderTable([]);
+    $("resultCount").textContent = "";
+  }
+});
+
+/* ===================== Render ===================== */
+function headerCell(label, key){
+  const isOn = sortState.key === key;
+  const arrow = isOn ? (sortState.dir === 1 ? "▲" : "▼") : "";
+  return `
+    <th data-sort="${key}">
+      <span class="sort-ind">
+        <span class="sort-dot ${isOn ? "on" : ""}"></span>
+        <span>${label}</span>
+        <span class="arrow">${arrow}</span>
+      </span>
+    </th>
+  `;
+}
+
+function renderTable(rows){
+  const wrap = $("tableWrapper");
+  const count = $("resultCount");
+
+  if(!rows || rows.length === 0){
+    count.textContent = "";
+    wrap.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
+    return;
+  }
+
+  count.textContent = `${rows.length.toLocaleString()}건`;
+
+  let html = `<table>
+    <thead><tr>
+      <th data-nosort style="cursor:default;">
+        <span class="sort-ind"><span class="sort-dot"></span><span>#</span></span>
+      </th>
+      ${headerCell("주문번호", COL.ORDER_NO)}
+      ${headerCell("쇼핑몰", COL.MALL)}
+      ${headerCell("수령인", COL.RECEIVER)}
+      ${headerCell("송장번호", COL.INVOICE)}
+      <th data-nosort style="cursor:default;">
+        <span class="sort-ind"><span class="sort-dot"></span><span>연락처</span></span>
+      </th>
+      ${headerCell("상품명", COL.PRODUCT)}
+      ${headerCell("수량", COL.QTY)}
+      ${headerCell("결제금액", COL.AMOUNT)}
+      ${headerCell("컬러코드", COL.COLOR)}
+    </tr></thead>
+    <tbody>`;
+
+  rows.forEach((r,i)=>{
+    html += `<tr>
+      <td class="copy">${i+1}</td>
+      <td class="copy">${r[COL.ORDER_NO]||""}</td>
+      <td class="copy">${r[COL.MALL]||""}</td>
+      <td class="copy">${r[COL.RECEIVER]||""}</td>
+      <td class="copy">${r[COL.INVOICE]||""}</td>
+      <td class="copy">${r[COL.PHONE]||""}</td>
+      <td class="copy">${r[COL.PRODUCT]||""}</td>
+      <td class="copy">${r[COL.QTY]||""}</td>
+      <td class="copy">${r[COL.AMOUNT]||""}</td>
+      <td class="copy">${r[COL.COLOR]||""}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+
+  // copy
+  wrap.querySelectorAll(".copy").forEach(cell=>{
+    cell.addEventListener("click", ()=>{
+      const text = cell.textContent.trim();
+      navigator.clipboard.writeText(text)
+        .catch(()=>showToast("복사 실패"));
+    });
+  });
+
+  // sort
+  wrap.querySelectorAll("thead th[data-sort]").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = Number(th.dataset.sort);
+      if(sortState.key === key) sortState.dir *= -1;
+      else sortState = { key, dir: 1 };
+
+      // 검색어 없으면 표 비움 유지
+      if(!searchInput.value.trim()){
+        renderTable([]);
+        return;
+      }
+      applySearchAndSort();
+    });
+  });
+}
+</script>
+</body>
+</html>
