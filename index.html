@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>발주서</title>
-      
+
 <link rel="icon" type="image/png" href="android-icon-48x48.ico">
 
 <!-- 폰트 -->
@@ -14,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
-:root {
+:root{
   --bg-gradient: radial-gradient(circle at top left, #f9a8d4 0, #e5e7eb 40%, #e0f2fe 100%);
   --card-bg: rgba(255, 255, 255, 0.96);
   --border-soft: rgba(148, 163, 184, 0.5);
@@ -27,90 +27,106 @@
 *{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
 body{margin:0;min-height:100vh;padding:32px 16px;color:var(--text-main);background:var(--bg-gradient);}
 .container{max-width:1200px;margin:0 auto;}
-.card{background:var(--card-bg);border-radius:18px;padding:24px 24px 20px;box-shadow:0 18px 45px rgba(15,23,42,0.12),0 0 0 1px rgba(148,163,184,0.35);border:1px solid rgba(248,250,252,0.7);backdrop-filter:blur(12px);}
+.card{
+  background:var(--card-bg);
+  border-radius:18px;
+  padding:24px 24px 20px;
+  box-shadow:0 18px 45px rgba(15,23,42,0.12),0 0 0 1px rgba(148,163,184,0.35);
+  border:1px solid rgba(248,250,252,0.7);
+  backdrop-filter:blur(12px);
+}
 .card-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;}
 .card-title{font-size:20px;font-weight:700;display:flex;gap:8px;align-items:center;}
-.card-title-badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid rgba(37,99,235,0.2);}
+.card-title-badge{
+  font-size:11px;padding:3px 8px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid rgba(37,99,235,0.2);
+}
 .card-subtitle{font-size:12px;color:var(--text-sub);}
-.actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;}
-.btn{border-radius:999px;border:1px solid var(--border-soft);padding:6px 14px;font-size:12px;cursor:pointer;background:#fff;}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
-.btn:disabled{opacity:0.5;cursor:default;}
-.status{font-size:11px;color:var(--text-sub);display:flex;justify-content:space-between;margin-bottom:8px;}
-.table-wrapper{max-height:420px;overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.4);background:rgba(248,250,252,0.9);}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-thead{position:sticky;top:0;background:rgba(241,245,249,0.98);backdrop-filter:blur(6px);}
-th,td{padding:6px 8px;border-bottom:1px solid rgba(226,232,240,0.8);}
-tbody tr:nth-child(even){background:rgba(255,255,255,0.8);}
-tbody tr:hover{background:rgba(219,234,254,0.7);}
-.no-data{padding:14px;text-align:center;font-size:12px;color:var(--text-sub);}
+
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.field input{border-radius:9px;border:1px solid var(--border-soft);padding:6px 10px;font-size:12px;outline:none;background:rgba(248,250,252,0.9);}
-.field input:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(37,99,235,0.2);background:#fff;}
+.field input{
+  border-radius:10px;border:1px solid var(--border-soft);
+  padding:10px 12px;font-size:13px;outline:none;
+  background:rgba(248,250,252,0.9);
+}
+.field input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.14);
+  background:#fff;
+}
+
+.status{
+  font-size:11px;color:var(--text-sub);
+  display:flex;justify-content:space-between;align-items:center;
+  margin:10px 0 8px;
+}
+.status .hint{color:var(--text-sub);}
+.kbd{
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:6px;
+  border:1px solid rgba(148,163,184,0.45);
+  background:rgba(248,250,252,0.9);
+  color:var(--text-main);
+  margin-left:6px;
+}
+
+.table-wrapper{
+  max-height:520px;
+  overflow:auto;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,0.4);
+  background:rgba(248,250,252,0.9);
+}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{
+  position:sticky;top:0;
+  background:rgba(241,245,249,0.98);
+  backdrop-filter:blur(6px);
+  z-index:1;
+}
+th,td{padding:8px 10px;border-bottom:1px solid rgba(226,232,240,0.85);vertical-align:top;}
+th{font-weight:700;color:#0b1220;}
+tbody tr:nth-child(even){background:rgba(255,255,255,0.78);}
+tbody tr:hover{background:rgba(219,234,254,0.65);}
+.no-data{padding:18px;text-align:center;font-size:12px;color:var(--text-sub);}
+
+.copy-cell{cursor:pointer;}
+.copy-cell:active{transform:translateY(0.5px);}
+
+#toast{
+  position:fixed; right:18px; bottom:18px;
+  padding:10px 12px;
+  background:rgba(15,23,42,0.92);
+  color:#fff; border-radius:12px;
+  font-size:12px;
+  box-shadow:0 18px 45px rgba(15,23,42,0.22);
+  opacity:0; transform:translateY(8px);
+  transition:.18s;
+  pointer-events:none;
+  z-index:9999;
+}
 </style>
 </head>
+
 <body>
 <div class="container">
   <div class="card">
     <div class="card-header">
       <div>
         <div class="card-title">정보 조회 <span class="card-title-badge">실시간 DB</span></div>
-        <div class="card-subtitle"> </div>
+        <div class="card-subtitle">주문번호, 수령인, 상품명 등 전체 검색 (셀 클릭 시 복사)</div>
       </div>
     </div>
-<div class="actions" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-    <button class="btn" id="reloadBtn">새로고침</button>
-    <button class="btn" id="exportBtn" disabled>검색결과 CSV</button>
-    <button class="btn" id="resetBtn">입력 초기화</button>
-  </div>
 
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-    <button class="btn" id="chipNoInvoice">미송장</button>
-    <button class="btn" id="chipHasInvoice">송장있음</button>
-    <button class="btn" id="chipQty2">수량 2개↑</button>
-  </div>
-</div>
-
-<div id="kpiRow" style="display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:10px; margin:12px 0;">
-  <div class="card" style="padding:12px; border-radius:14px;">
-    <div style="font-size:11px;color:var(--text-sub);">결과 건수</div>
-    <div id="kpiCount" style="font-size:18px;font-weight:800;">-</div>
-  </div>
-  <div class="card" style="padding:12px; border-radius:14px;">
-    <div style="font-size:11px;color:var(--text-sub);">총 수량</div>
-    <div id="kpiQty" style="font-size:18px;font-weight:800;">-</div>
-  </div>
-  <div class="card" style="padding:12px; border-radius:14px;">
-    <div style="font-size:11px;color:var(--text-sub);">결제금액 합</div>
-    <div id="kpiAmount" style="font-size:18px;font-weight:800;">-</div>
-  </div>
-  <div class="card" style="padding:12px; border-radius:14px;">
-    <div style="font-size:11px;color:var(--text-sub);">미송장</div>
-    <div id="kpiNoInvoice" style="font-size:18px;font-weight:800;">-</div>
-  </div>
-</div>
-
-<div id="toast" style="position:fixed; right:18px; bottom:18px; padding:10px 12px;
-  background:rgba(15,23,42,0.92); color:#fff; border-radius:12px; font-size:12px;
-  box-shadow:0 18px 45px rgba(15,23,42,0.22); opacity:0; transform:translateY(8px);
-  transition:.18s; pointer-events:none; z-index:9999;">
-  복사됨
-</div>
-
-        
-        
     <div class="field">
-      <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명 등 전체 검색">
-    </div>
-
-    <div class="actions">
-      <button class="btn" id="resetBtn">입력 초기화</button>
+      <input id="searchInput" type="text" placeholder="검색어를 입력하세요 (Esc: 입력 지우기)">
     </div>
 
     <div class="status">
       <span id="loadStatus">DB 데이터를 불러오는 중...</span>
-      <span id="resultCount"></span>
+      <span class="hint">입력창 <span class="kbd">Esc</span> 로 초기화 · <span id="resultCount"></span></span>
     </div>
 
     <div class="table-wrapper" id="tableWrapper">
@@ -118,6 +134,8 @@ tbody tr:hover{background:rgba(219,234,254,0.7);}
     </div>
   </div>
 </div>
+
+<div id="toast">복사됨</div>
 
 <script>
 const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
@@ -128,51 +146,137 @@ const COL = {
   PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
 };
 
-// DB 로드
-async function loadData(){
+// ===== 로컬 캐시(장애 대비) =====
+const CACHE_KEY = "order_csv_cache_v1";
+const CACHE_TIME_KEY = "order_csv_cache_time_v1";
+const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6시간
+
+async function fetchWithTimeout(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(CSV_URL);
-    const text = await res.text();
-    Papa.parse(text, {
+    const res = await fetch(url, { signal: controller.signal });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return await res.text();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+function saveCache(csvText){
+  try{
+    localStorage.setItem(CACHE_KEY, csvText);
+    localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+  }catch(e){
+    console.warn("캐시 저장 실패:", e);
+  }
+}
+
+function readCache(){
+  const csvText = localStorage.getItem(CACHE_KEY);
+  const ts = Number(localStorage.getItem(CACHE_TIME_KEY) || 0);
+  if(!csvText) return null;
+  return { csvText, ts };
+}
+
+function isCacheFresh(ts){
+  return (Date.now() - ts) <= CACHE_TTL_MS;
+}
+
+// ===== UI 유틸 =====
+function debounce(fn, wait=200){
+  let t;
+  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+
+function showToast(msg="복사됨"){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.opacity = 1;
+  el.style.transform = "translateY(0)";
+  setTimeout(()=>{
+    el.style.opacity = 0;
+    el.style.transform = "translateY(8px)";
+  }, 900);
+}
+
+// ===== 데이터 로드 =====
+async function loadData(){
+  const statusEl = document.getElementById("loadStatus");
+  statusEl.textContent = "DB 데이터를 불러오는 중...";
+
+  const cached = readCache();
+
+  try {
+    const csvText = await fetchWithTimeout(CSV_URL, 8000);
+    saveCache(csvText);
+
+    Papa.parse(csvText, {
       complete: (results)=>{
         dataRows = results.data.slice(1).filter(r=>r && r.length>1);
-        document.getElementById("loadStatus").textContent = `DB 로드 완료 (총 ${dataRows.length}건)`;
-        renderTable([]);
+        const now = new Date();
+        statusEl.textContent = `DB 로드 완료 (총 ${dataRows.length}건) · ${now.toLocaleString()}`;
+        renderTable([]); // 검색 전엔 비워두기
       }
     });
+
   } catch(err){
-    console.error(err);
-    document.getElementById("loadStatus").textContent = "DB 로드 실패";
+    console.error("DB 로드 실패:", err);
+
+    if(cached){
+      const freshText = isCacheFresh(cached.ts) ? "캐시(최신)" : "캐시(오래됨)";
+      const when = new Date(cached.ts).toLocaleString();
+
+      Papa.parse(cached.csvText, {
+        complete: (results)=>{
+          dataRows = results.data.slice(1).filter(r=>r && r.length>1);
+          statusEl.textContent =
+            `DB 로드 실패 → ${freshText}로 조회 중 (총 ${dataRows.length}건) · 캐시저장: ${when}`;
+          renderTable([]);
+        }
+      });
+      return;
+    }
+
+    statusEl.textContent = "DB 로드 실패 (캐시 없음)";
+    document.getElementById("tableWrapper").innerHTML =
+      '<div class="no-data">데이터를 불러오지 못했습니다. 네트워크/구글시트 상태를 확인하세요.</div>';
   }
 }
 loadData();
 
+// ===== 검색 =====
 const searchInput = document.getElementById("searchInput");
-searchInput.addEventListener("input", ()=>{
+
+function applySearch(){
   const keyword = searchInput.value.trim().toLowerCase();
   if(!keyword){
     renderTable([]);
     return;
   }
-  const filtered = dataRows.filter(row =>
-    row.join(" ").toLowerCase().includes(keyword)
-  );
+  const filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
   renderTable(filtered);
+}
+
+searchInput.addEventListener("input", debounce(applySearch, 200));
+searchInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    searchInput.value = "";
+    renderTable([]);
+  }
 });
 
-document.getElementById("resetBtn").addEventListener("click", ()=>{
-  searchInput.value = "";
-  renderTable([]);
-});
-
+// ===== 테이블 렌더 =====
 function renderTable(rows){
   const tableWrapper = document.getElementById("tableWrapper");
   const resultCount = document.getElementById("resultCount");
+
   if(!rows || rows.length===0){
     resultCount.textContent = "";
     tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
     return;
   }
+
   resultCount.textContent = `검색 결과 ${rows.length}건`;
 
   let html = `<table><thead><tr>
@@ -182,176 +286,11 @@ function renderTable(rows){
 
   rows.forEach((r,i)=>{
     html += `<tr>
-      <td class="copy-cell">${i+1}</td><td class="copy-cell">${r[COL.ORDER_NO]||""}</td>
-      <td class="copy-cell">${r[COL.MALL]||""}</td><td class="copy-cell">${r[COL.RECEIVER]||""}</td>
-      <td class="copy-cell">${r[COL.INVOICE]||""}</td><td class="copy-cell">${r[COL.PHONE]||""}</td>
-      <td class="copy-cell">${r[COL.PRODUCT]||""}</td><td class="copy-cell">${r[COL.QTY]||""}</td>
-      <td class="copy-cell">${r[COL.AMOUNT]||""}</td><td class="copy-cell">${r[COL.COLOR]||""}</td>
-    </tr>`;
-  });
-
-  html += `</tbody></table>`;
-  tableWrapper.innerHTML = html;
-
-  // 셀 클릭 시 바로 복사
-  tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
-    cell.addEventListener("click", ()=>{
-      navigator.clipboard.writeText(cell.textContent)
-        .catch(err=>console.error(err));
-    });
-  });
-}
-
-let currentRows = [];
-let sortState = { key: null, dir: 1 }; // dir: 1 asc, -1 desc
-
-function debounce(fn, wait=200){
-  let t; 
-  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
-}
-
-function showToast(msg="복사됨"){
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.style.opacity = 1;
-  el.style.transform = "translateY(0)";
-  setTimeout(()=>{ el.style.opacity = 0; el.style.transform = "translateY(8px)"; }, 900);
-}
-
-function toNumber(v){
-  if(v==null) return 0;
-  const n = String(v).replace(/[^0-9.-]/g,"");
-  return Number(n) || 0;
-}
-
-function updateKPI(rows){
-  const count = rows.length;
-  const qtySum = rows.reduce((a,r)=> a + toNumber(r[COL.QTY]), 0);
-  const amtSum = rows.reduce((a,r)=> a + toNumber(r[COL.AMOUNT]), 0);
-  const noInv = rows.filter(r => !(r[COL.INVOICE]||"").trim()).length;
-
-  document.getElementById("kpiCount").textContent = count.toLocaleString();
-  document.getElementById("kpiQty").textContent = qtySum.toLocaleString();
-  document.getElementById("kpiAmount").textContent = amtSum.toLocaleString();
-  document.getElementById("kpiNoInvoice").textContent = noInv.toLocaleString();
-}
-
-function applySearch(){
-  const keyword = searchInput.value.trim().toLowerCase();
-  let filtered = dataRows;
-
-  if(keyword){
-    filtered = filtered.filter(row => row.join(" ").toLowerCase().includes(keyword));
-  }
-
-  // 정렬 적용
-  if(sortState.key){
-    const { key, dir } = sortState;
-    filtered = [...filtered].sort((a,b)=>{
-      const av = a[key] ?? "";
-      const bv = b[key] ?? "";
-      // 숫자컬럼은 숫자정렬
-      if(key === COL.QTY || key === COL.AMOUNT){
-        return (toNumber(av) - toNumber(bv)) * dir;
-      }
-      return String(av).localeCompare(String(bv), "ko") * dir;
-    });
-  }
-
-  currentRows = filtered;
-  renderTable(currentRows);
-}
-
-searchInput.addEventListener("input", debounce(applySearch, 200));
-
-// 새로고침
-document.getElementById("reloadBtn").addEventListener("click", ()=>loadData());
-
-// 칩 필터
-document.getElementById("chipNoInvoice").addEventListener("click", ()=>{
-  currentRows = dataRows.filter(r => !(r[COL.INVOICE]||"").trim());
-  sortState = { key:null, dir:1 };
-  renderTable(currentRows);
-});
-document.getElementById("chipHasInvoice").addEventListener("click", ()=>{
-  currentRows = dataRows.filter(r => (r[COL.INVOICE]||"").trim());
-  sortState = { key:null, dir:1 };
-  renderTable(currentRows);
-});
-document.getElementById("chipQty2").addEventListener("click", ()=>{
-  currentRows = dataRows.filter(r => toNumber(r[COL.QTY]) >= 2);
-  sortState = { key:null, dir:1 };
-  renderTable(currentRows);
-});
-
-// CSV 내보내기
-document.getElementById("exportBtn").addEventListener("click", ()=>{
-  if(!currentRows.length) return;
-  const header = ["주문번호","쇼핑몰","수령인","송장번호","연락처","상품명","수량","결제금액","컬러코드"];
-  const body = currentRows.map(r => ([
-    r[COL.ORDER_NO], r[COL.MALL], r[COL.RECEIVER], r[COL.INVOICE],
-    r[COL.PHONE], r[COL.PRODUCT], r[COL.QTY], r[COL.AMOUNT], r[COL.COLOR]
-  ]));
-  const csv = [header, ...body]
-    .map(row => row.map(v => `"${String(v??"").replaceAll('"','""')}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `검색결과_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-// renderTable 수정: KPI + export 활성화 + 복사 토스트 + 정렬 헤더
-function renderTable(rows){
-  const tableWrapper = document.getElementById("tableWrapper");
-  const resultCount = document.getElementById("resultCount");
-  const exportBtn = document.getElementById("exportBtn");
-
-  if(!rows || rows.length===0){
-    resultCount.textContent = "";
-    exportBtn.disabled = true;
-    updateKPI([]);
-    tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
-    return;
-  }
-
-  exportBtn.disabled = false;
-  resultCount.textContent = `검색 결과 ${rows.length}건`;
-  updateKPI(rows);
-
-  const sortMark = (key)=>{
-    if(sortState.key !== key) return "";
-    return sortState.dir === 1 ? " ▲" : " ▼";
-  };
-
-  let html = `<table><thead><tr>
-    <th>#</th>
-    <th data-sort="${COL.ORDER_NO}">주문번호${sortMark(COL.ORDER_NO)}</th>
-    <th data-sort="${COL.MALL}">쇼핑몰${sortMark(COL.MALL)}</th>
-    <th data-sort="${COL.RECEIVER}">수령인${sortMark(COL.RECEIVER)}</th>
-    <th data-sort="${COL.INVOICE}">송장번호${sortMark(COL.INVOICE)}</th>
-    <th>연락처</th>
-    <th data-sort="${COL.PRODUCT}">상품명${sortMark(COL.PRODUCT)}</th>
-    <th data-sort="${COL.QTY}">수량${sortMark(COL.QTY)}</th>
-    <th data-sort="${COL.AMOUNT}">결제금액${sortMark(COL.AMOUNT)}</th>
-    <th data-sort="${COL.COLOR}">컬러코드${sortMark(COL.COLOR)}</th>
-  </tr></thead><tbody>`;
-
-  rows.forEach((r,i)=>{
-    const invoice = (r[COL.INVOICE]||"").trim();
-    const invBadge = invoice ? "" : `<span style="margin-left:6px; font-size:10px; padding:2px 6px; border-radius:999px; 
-      background:rgba(239,68,68,.10); color:#ef4444; border:1px solid rgba(239,68,68,.25);">미송장</span>`;
-
-    html += `<tr>
       <td class="copy-cell">${i+1}</td>
       <td class="copy-cell">${r[COL.ORDER_NO]||""}</td>
       <td class="copy-cell">${r[COL.MALL]||""}</td>
       <td class="copy-cell">${r[COL.RECEIVER]||""}</td>
-      <td class="copy-cell">${invoice||""}${invBadge}</td>
+      <td class="copy-cell">${r[COL.INVOICE]||""}</td>
       <td class="copy-cell">${r[COL.PHONE]||""}</td>
       <td class="copy-cell">${r[COL.PRODUCT]||""}</td>
       <td class="copy-cell">${r[COL.QTY]||""}</td>
@@ -363,29 +302,16 @@ function renderTable(rows){
   html += `</tbody></table>`;
   tableWrapper.innerHTML = html;
 
-  // 정렬 헤더 클릭
-  tableWrapper.querySelectorAll("thead th[data-sort]").forEach(th=>{
-    th.style.cursor = "pointer";
-    th.addEventListener("click", ()=>{
-      const key = Number(th.dataset.sort);
-      if(sortState.key === key) sortState.dir *= -1;
-      else sortState = { key, dir: 1 };
-      renderTable(currentRows); // 현재결과에 정렬만 재적용하려면 여기에서 sort 호출하도록 바꿀 수도 있음
-      // 간단하게: search 다시 적용
-      applySearch();
-    });
-  });
-
-  // 셀 클릭 복사 + 토스트
+  // 셀 클릭 시 복사 + 토스트
   tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
     cell.addEventListener("click", ()=>{
-      navigator.clipboard.writeText(cell.textContent.trim())
+      const text = cell.textContent.trim();
+      navigator.clipboard.writeText(text)
         .then(()=>showToast("복사됨"))
         .catch(err=>console.error(err));
     });
   });
 }
-      
 </script>
 </body>
 </html>
