@@ -115,18 +115,17 @@ tbody tr:hover{background:rgba(219,234,254,0.65);}
   <div class="card">
     <div class="card-header">
       <div>
-        <div class="card-title">정보 조회 <span class="card-title-badge">실시간 DB</span></div>
-        <div class="card-subtitle">주문번호, 수령인, 상품명 등 전체 검색 (셀 클릭 시 복사)</div>
+        <div class="card-title">정보 조회 <span class="card-title-badge"> 매칭 </span></div>
       </div>
     </div>
 
     <div class="field">
-      <input id="searchInput" type="text" placeholder="검색어를 입력하세요 (Esc: 입력 지우기)">
+      <input id="searchInput" type="text" placeholder="검색어를 입력하세요">
     </div>
 
     <div class="status">
       <span id="loadStatus">DB 데이터를 불러오는 중...</span>
-      <span class="hint">입력창 <span class="kbd">Esc</span> 로 초기화 · <span id="resultCount"></span></span>
+      <span class="hint"> <span class="kbd">Esc</span> 초기화<span id="resultCount"></span></span>
     </div>
 
     <div class="table-wrapper" id="tableWrapper">
@@ -215,7 +214,7 @@ async function loadData(){
       complete: (results)=>{
         dataRows = results.data.slice(1).filter(r=>r && r.length>1);
         const now = new Date();
-        statusEl.textContent = `DB 로드 완료 (총 ${dataRows.length}건) · ${now.toLocaleString()}`;
+        statusEl.textContent = `DB 로드 완료 (총 ${dataRows.length}건)}`;
         renderTable([]); // 검색 전엔 비워두기
       }
     });
