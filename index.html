@@ -1,73 +1,383 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>발주서</title>
 
-<link rel="icon" type="image/png" href="android-icon-48x48.ico">
+<link rel="icon" type="image/png" href="android-icon-48x48.ico" />
 <link rel="stylesheet" as="style" crossorigin
- href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
+/* ========= Neon Glass Theme ========= */
 :root{
-  --bg: radial-gradient(circle at top left,#f9a8d4 0,#e5e7eb 40%,#e0f2fe 100%);
-  --card: rgba(255,255,255,.96);
-  --border: rgba(148,163,184,.45);
-  --accent:#2563eb;
-  --text:#0f172a;
-  --sub:#64748b;
+  --bg: #070A14;
+  --bg2:#050711;
+
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.09);
+  --stroke: rgba(255,255,255,.12);
+
+  --text: rgba(255,255,255,.92);
+  --sub: rgba(255,255,255,.62);
+  --muted: rgba(255,255,255,.45);
+
+  --cyan: #3FE3FF;
+  --mag: #B95CFF;
+  --lime:#37FFB2;
+
+  --shadow: 0 24px 70px rgba(0,0,0,.55);
+  --shadow2: 0 16px 40px rgba(0,0,0,.45);
 }
-*{box-sizing:border-box;font-family:Pretendard,system-ui}
-body{margin:0;padding:32px 16px;background:var(--bg);color:var(--text)}
-.container{max-width:1200px;margin:auto}
+
+*{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background: radial-gradient(1200px 700px at 20% 10%, rgba(63,227,255,.10), transparent 60%),
+              radial-gradient(900px 600px at 80% 30%, rgba(185,92,255,.11), transparent 55%),
+              radial-gradient(1000px 700px at 50% 90%, rgba(55,255,178,.08), transparent 60%),
+              linear-gradient(180deg, var(--bg), var(--bg2));
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+.container{
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 34px 18px 44px;
+}
+
+/* subtle neon blobs */
+.glow{
+  position:fixed;
+  inset:-20%;
+  pointer-events:none;
+  filter: blur(60px);
+  opacity:.25;
+  z-index:0;
+}
+.glow::before,
+.glow::after{
+  content:"";
+  position:absolute;
+  width:520px;height:520px;border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, rgba(63,227,255,.9), transparent 55%);
+  left:8%; top:14%;
+}
+.glow::after{
+  width:560px;height:560px;
+  background: radial-gradient(circle at 30% 30%, rgba(185,92,255,.9), transparent 55%);
+  right:10%; top:18%;
+}
+
+/* top bar */
+.topbar{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:14px;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.brand-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.2px;
+}
+.pill{
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(63,227,255,.18), rgba(185,92,255,.18));
+  border:1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.88);
+  box-shadow: 0 0 0 1px rgba(63,227,255,.08) inset;
+}
+.brand-sub{
+  font-size:12px;
+  color:var(--sub);
+}
+
+.meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--sub);
+  font-size:12px;
+  white-space:nowrap;
+}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background: rgba(255,255,255,.22);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+}
+.dot.live{
+  background: var(--lime);
+  box-shadow: 0 0 14px rgba(55,255,178,.55), 0 0 0 1px rgba(55,255,178,.22) inset;
+}
+
+/* glass card */
 .card{
-  background:var(--card);border-radius:18px;padding:24px;
-  box-shadow:0 18px 45px rgba(15,23,42,.12);
+  position:relative;
+  z-index:1;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow:hidden;
 }
-.card-title{font-size:20px;font-weight:700}
-.field{margin:14px 0}
-input{
-  width:100%;padding:10px 12px;font-size:13px;
-  border-radius:10px;border:1px solid var(--border)
+.card::before{
+  content:"";
+  position:absolute; inset:-2px;
+  background: radial-gradient(900px 240px at 10% 0%, rgba(63,227,255,.22), transparent 60%),
+              radial-gradient(900px 240px at 90% 0%, rgba(185,92,255,.20), transparent 55%),
+              radial-gradient(800px 220px at 50% 120%, rgba(55,255,178,.12), transparent 60%);
+  pointer-events:none;
+  opacity:.75;
 }
-.status{font-size:11px;color:var(--sub);display:flex;justify-content:space-between}
-.table-wrapper{
-  margin-top:10px;border-radius:12px;overflow:auto;
-  border:1px solid var(--border);max-height:520px
+.card-inner{
+  position:relative;
+  padding: 18px 18px 14px;
 }
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead{position:sticky;top:0;background:#f1f5f9}
-th,td{padding:8px 10px;border-bottom:1px solid #e5e7eb}
-th{cursor:pointer;user-select:none}
-tbody tr:hover{background:#dbeafe}
-.copy{cursor:pointer}
-.no-data{text-align:center;padding:20px;color:var(--sub)}
+
+/* search */
+.search-row{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin: 10px 0 12px;
+}
+
+.search{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.22) inset, var(--shadow2);
+}
+.search:focus-within{
+  border-color: rgba(63,227,255,.35);
+  box-shadow: 0 0 0 1px rgba(63,227,255,.25) inset, 0 0 0 4px rgba(63,227,255,.10), var(--shadow2);
+}
+.search-icon{
+  width:18px;height:18px;opacity:.85;flex:0 0 auto;
+  filter: drop-shadow(0 0 8px rgba(63,227,255,.25));
+}
+.search input{
+  width:100%;
+  border:0; outline:0;
+  background:transparent;
+  color:var(--text);
+  font-size:13px;
+}
+.search input::placeholder{color:rgba(255,255,255,.45);}
+
+.kbd{
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.72);
+}
+
+/* status */
+.status-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:10px;
+  font-size:12px;
+  color:var(--sub);
+}
+.status-row strong{color:rgba(255,255,255,.88);font-weight:700;}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+/* table */
+.table-wrap{
+  border-radius:14px;
+  border: 1px solid rgba(255,255,255,.12);
+  overflow:auto;
+  background: rgba(0,0,0,.18);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18) inset;
+  max-height: 560px;
+}
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:12px;
+}
+thead th{
+  position: sticky;
+  top:0;
+  z-index:2;
+  text-align:left;
+  padding:10px 12px;
+  background: rgba(7,10,20,.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.88);
+  font-weight:700;
+  user-select:none;
+  cursor:pointer;
+}
+thead th:first-child{border-top-left-radius:14px;}
+thead th:last-child{border-top-right-radius:14px;}
+
+tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.84);
+}
+tbody tr{
+  background: rgba(255,255,255,.02);
+}
+tbody tr:nth-child(even){
+  background: rgba(255,255,255,.03);
+}
+tbody tr:hover{
+  background: linear-gradient(90deg, rgba(63,227,255,.08), rgba(185,92,255,.06));
+}
+.copy{
+  cursor:pointer;
+}
+.copy:active{
+  transform: translateY(0.5px);
+}
+
+.sort-ind{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.sort-dot{
+  width:6px;height:6px;border-radius:50%;
+  background: rgba(255,255,255,.22);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset;
+}
+.sort-dot.on{
+  background: var(--cyan);
+  box-shadow: 0 0 14px rgba(63,227,255,.55), 0 0 0 1px rgba(63,227,255,.22) inset;
+}
+.arrow{
+  font-size:11px;
+  opacity:.9;
+  color: rgba(255,255,255,.78);
+}
+
+.no-data{
+  padding:22px 14px;
+  text-align:center;
+  color: rgba(255,255,255,.58);
+  font-size:12px;
+}
+
+/* toast */
 #toast{
-  position:fixed;right:16px;bottom:16px;
-  background:#0f172a;color:#fff;
-  padding:8px 12px;border-radius:10px;
-  font-size:12px;opacity:0;transition:.2s
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:9999;
+  padding:10px 12px;
+  border-radius:14px;
+  background: rgba(0,0,0,.58);
+  border:1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,.92);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55), 0 0 30px rgba(63,227,255,.12);
+  opacity:0;
+  transform: translateY(10px);
+  transition: .18s ease;
+  pointer-events:none;
+}
+#toast.show{
+  opacity:1;
+  transform: translateY(0);
+}
+
+/* responsive */
+@media (max-width: 760px){
+  .topbar{flex-direction:column; align-items:flex-start;}
+  .meta{white-space:normal}
+  .table-wrap{max-height: 68vh;}
 }
 </style>
 </head>
 
 <body>
+<div class="glow"></div>
+
 <div class="container">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-title">
+        정보 조회
+        <span class="pill">Neon Glass</span>
+      </div>
+      <div class="brand-sub">주문번호 · 수령인 · 상품명 등 통합 검색 / 헤더 클릭 정렬 / 셀 클릭 복사</div>
+    </div>
+
+    <div class="meta">
+      <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
+      <span class="badge"><strong id="resultCount"> </strong></span>
+      <span class="kbd">Esc</span>
+    </div>
+  </div>
+
   <div class="card">
-    <div class="card-title">정보 조회</div>
+    <div class="card-inner">
+      <div class="search-row">
+        <div class="search">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none">
+            <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="rgba(255,255,255,.78)" stroke-width="1.8"/>
+            <path d="M16.5 16.5 21 21" stroke="rgba(63,227,255,.85)" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명… (검색어 입력)" autocomplete="off" />
+        </div>
+        <div class="kbd" title="입력창에서 Esc를 누르면 초기화">Esc 초기화</div>
+      </div>
 
-    <div class="field">
-      <input id="search" placeholder="주문번호 · 수령인 · 상품명 검색 (Esc 초기화)">
-    </div>
+      <div class="status-row">
+        <div id="cacheHint"> </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span style="color:var(--muted);">정렬: 헤더 클릭</span>
+          <span style="color:var(--muted);">복사: 셀 클릭</span>
+        </div>
+      </div>
 
-    <div class="status">
-      <span id="status">DB 로딩 중...</span>
-      <span id="count"></span>
-    </div>
-
-    <div class="table-wrapper" id="table">
-      <div class="no-data">데이터 로딩 중...</div>
+      <div class="table-wrap" id="tableWrapper">
+        <div class="no-data">데이터 로딩 중…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -75,102 +385,257 @@ tbody tr:hover{background:#dbeafe}
 <div id="toast">복사됨</div>
 
 <script>
+/* ===================== Config ===================== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
 
-const COL = { ORDER:1, MALL:2, NAME:3, INVOICE:5, PHONE:6, PRODUCT:10, QTY:11, AMOUNT:12, COLOR:18 };
-let rows = [];
-let sort = { key:null, dir:1 };
+const COL = {
+  ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
+  PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
+};
 
-// ===== cache =====
-const CK="csv_cache", CT="csv_cache_time";
-async function fetchCSV(){
+let dataRows = [];
+let sortState = { key: null, dir: 1 };
+
+/* ===================== Cache (Local) ===================== */
+const CACHE_KEY = "order_csv_cache_v2";
+const CACHE_TIME_KEY = "order_csv_cache_time_v2";
+const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
+
+async function fetchWithTimeout(url, timeoutMs = 8000){
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
   try{
-    const r = await fetch(CSV_URL,{signal:AbortSignal.timeout(8000)});
-    const t = await r.text();
-    localStorage.setItem(CK,t);
-    localStorage.setItem(CT,Date.now());
-    return t;
-  }catch{
-    return localStorage.getItem(CK);
+    const res = await fetch(url, { signal: controller.signal });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    return await res.text();
+  } finally {
+    clearTimeout(t);
   }
 }
 
-// ===== load =====
-fetchCSV().then(csv=>{
-  if(!csv){
-    status.textContent="DB 로드 실패";
-    table.innerHTML='<div class="no-data">데이터 없음</div>';
-    return;
+function saveCache(csvText){
+  try{
+    localStorage.setItem(CACHE_KEY, csvText);
+    localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+  }catch(e){
+    console.warn("캐시 저장 실패:", e);
   }
-  Papa.parse(csv,{
-    complete:r=>{
-      rows=r.data.slice(1).filter(v=>v.length);
-      status.textContent=`DB 로드 완료 (${rows.length}건)`;
+}
+function readCache(){
+  const csvText = localStorage.getItem(CACHE_KEY);
+  const ts = Number(localStorage.getItem(CACHE_TIME_KEY) || 0);
+  if(!csvText) return null;
+  return { csvText, ts };
+}
+function isCacheFresh(ts){ return (Date.now() - ts) <= CACHE_TTL_MS; }
+
+/* ===================== UI Helpers ===================== */
+const $ = (id)=>document.getElementById(id);
+
+function debounce(fn, wait=180){
+  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+
+function showToast(msg="복사됨"){
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"), 850);
+}
+
+function toNumber(v){
+  const n = String(v ?? "").replace(/[^0-9.-]/g,"");
+  return Number(n) || 0;
+}
+
+function setHeaderStatus(text, isLive=true){
+  $("loadStatus").textContent = text;
+  // dot live style is static; keep simple
+}
+
+function setCacheHint(text){
+  $("cacheHint").textContent = text;
+  $("cacheHint").style.color = text.includes("캐시") ? "rgba(255,255,255,.60)" : "rgba(255,255,255,.0)";
+}
+
+/* ===================== Data Load ===================== */
+async function loadData(){
+  setHeaderStatus("DB 로딩 중...");
+  setCacheHint("");
+
+  const cached = readCache();
+
+  try{
+    const csvText = await fetchWithTimeout(CSV_URL, 8000);
+    saveCache(csvText);
+
+    Papa.parse(csvText, {
+      complete: (results)=>{
+        dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+        setHeaderStatus(`DB 로드 완료 · ${dataRows.length.toLocaleString()}건`);
+        renderTable([]); // 검색 전엔 비움
+      }
+    });
+  }catch(err){
+    console.error(err);
+
+    if(cached){
+      const when = new Date(cached.ts).toLocaleString();
+      const freshness = isCacheFresh(cached.ts) ? "캐시(최신)" : "캐시(오래됨)";
+      setHeaderStatus(`DB 오류 → ${freshness}로 조회`);
+      setCacheHint(`캐시 사용 중 · 저장 시각: ${when}`);
+
+      Papa.parse(cached.csvText, {
+        complete: (results)=>{
+          dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+          renderTable([]);
+        }
+      });
+      return;
     }
-  });
-});
 
-// ===== utils =====
-function toast(){
-  const t=document.getElementById("toast");
-  t.style.opacity=1;
-  setTimeout(()=>t.style.opacity=0,800);
+    setHeaderStatus("DB 로드 실패 (캐시 없음)", false);
+    $("tableWrapper").innerHTML = '<div class="no-data">데이터를 불러오지 못했습니다. 네트워크/구글시트 상태를 확인하세요.</div>';
+  }
 }
-function num(v){return Number(String(v).replace(/[^0-9.-]/g,""))||0}
+loadData();
 
-// ===== render =====
-function render(data){
-  if(!data.length){
-    count.textContent="";
-    table.innerHTML='<div class="no-data">검색 결과 없음</div>';
+/* ===================== Search + Sort ===================== */
+const searchInput = $("searchInput");
+let currentRows = [];
+
+function applySearchAndSort(){
+  const keyword = searchInput.value.trim().toLowerCase();
+
+  let filtered = dataRows;
+  if(keyword){
+    filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
+  }else{
+    // 검색어 없으면 표 비움 (원래 동작 유지)
+    renderTable([]);
     return;
   }
-  count.textContent=`${data.length}건`;
-  let h=`<table><thead><tr>
-    <th data-k="ORDER">주문번호</th>
-    <th data-k="MALL">쇼핑몰</th>
-    <th data-k="NAME">수령인</th>
-    <th data-k="INVOICE">송장번호</th>
-    <th>연락처</th>
-    <th data-k="PRODUCT">상품명</th>
-    <th data-k="QTY">수량</th>
-    <th data-k="AMOUNT">금액</th>
-    <th>컬러</th>
-  </tr></thead><tbody>`;
-  data.forEach(r=>{
-    h+=`<tr>${Object.values(COL).map(i=>`<td class="copy">${r[i]||""}</td>`).join("")}</tr>`;
-  });
-  table.innerHTML=h+"</tbody></table>";
 
-  table.querySelectorAll(".copy").forEach(c=>{
-    c.onclick=()=>{navigator.clipboard.writeText(c.textContent);toast();}
-  });
-  table.querySelectorAll("th[data-k]").forEach(th=>{
-    th.onclick=()=>{
-      const k=COL[th.dataset.k];
-      sort.dir = sort.key===k ? -sort.dir : 1;
-      sort.key=k;
-      apply();
-    };
-  });
-}
+  if(sortState.key != null){
+    const k = sortState.key;
+    const dir = sortState.dir;
+    filtered = [...filtered].sort((a,b)=>{
+      const av = a[k] ?? "";
+      const bv = b[k] ?? "";
 
-// ===== search + sort =====
-function apply(){
-  let d=[...rows];
-  const q=search.value.toLowerCase();
-  if(q) d=d.filter(r=>r.join(" ").toLowerCase().includes(q));
-  if(sort.key){
-    d.sort((a,b)=>{
-      const A=a[sort.key],B=b[sort.key];
-      return (isNaN(A)?String(A).localeCompare(B):num(A)-num(B))*sort.dir;
+      // 숫자 정렬 우선 시도 (수량/금액/숫자열)
+      const an = toNumber(av);
+      const bn = toNumber(bv);
+      const bothNumeric = (String(av).match(/[0-9]/) && String(bv).match(/[0-9]/)) && (k === COL.QTY || k === COL.AMOUNT);
+
+      if(bothNumeric) return (an - bn) * dir;
+      return String(av).localeCompare(String(bv), "ko") * dir;
     });
   }
-  render(d);
+
+  currentRows = filtered;
+  renderTable(currentRows);
 }
 
-search.oninput=()=>setTimeout(apply,150);
-search.onkeydown=e=>{if(e.key==="Escape"){search.value="";render([])}};
+searchInput.addEventListener("input", debounce(applySearchAndSort, 180));
+searchInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape"){
+    searchInput.value = "";
+    sortState = { key: null, dir: 1 };
+    renderTable([]);
+    $("resultCount").textContent = "";
+  }
+});
+
+/* ===================== Render ===================== */
+function headerCell(label, key){
+  const isOn = sortState.key === key;
+  const arrow = isOn ? (sortState.dir === 1 ? "▲" : "▼") : "";
+  return `
+    <th data-sort="${key}">
+      <span class="sort-ind">
+        <span class="sort-dot ${isOn ? "on" : ""}"></span>
+        <span>${label}</span>
+        <span class="arrow">${arrow}</span>
+      </span>
+    </th>
+  `;
+}
+
+function renderTable(rows){
+  const wrap = $("tableWrapper");
+  const count = $("resultCount");
+
+  if(!rows || rows.length === 0){
+    count.textContent = "";
+    wrap.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
+    return;
+  }
+
+  count.textContent = `${rows.length.toLocaleString()}건`;
+
+  let html = `<table>
+    <thead><tr>
+      <th data-nosort style="cursor:default;">
+        <span class="sort-ind"><span class="sort-dot"></span><span>#</span></span>
+      </th>
+      ${headerCell("주문번호", COL.ORDER_NO)}
+      ${headerCell("쇼핑몰", COL.MALL)}
+      ${headerCell("수령인", COL.RECEIVER)}
+      ${headerCell("송장번호", COL.INVOICE)}
+      <th data-nosort style="cursor:default;">
+        <span class="sort-ind"><span class="sort-dot"></span><span>연락처</span></span>
+      </th>
+      ${headerCell("상품명", COL.PRODUCT)}
+      ${headerCell("수량", COL.QTY)}
+      ${headerCell("결제금액", COL.AMOUNT)}
+      ${headerCell("컬러코드", COL.COLOR)}
+    </tr></thead>
+    <tbody>`;
+
+  rows.forEach((r,i)=>{
+    html += `<tr>
+      <td class="copy">${i+1}</td>
+      <td class="copy">${r[COL.ORDER_NO]||""}</td>
+      <td class="copy">${r[COL.MALL]||""}</td>
+      <td class="copy">${r[COL.RECEIVER]||""}</td>
+      <td class="copy">${r[COL.INVOICE]||""}</td>
+      <td class="copy">${r[COL.PHONE]||""}</td>
+      <td class="copy">${r[COL.PRODUCT]||""}</td>
+      <td class="copy">${r[COL.QTY]||""}</td>
+      <td class="copy">${r[COL.AMOUNT]||""}</td>
+      <td class="copy">${r[COL.COLOR]||""}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+
+  // copy
+  wrap.querySelectorAll(".copy").forEach(cell=>{
+    cell.addEventListener("click", ()=>{
+      const text = cell.textContent.trim();
+      navigator.clipboard.writeText(text)
+        .then(()=>showToast("복사됨"))
+        .catch(()=>showToast("복사 실패"));
+    });
+  });
+
+  // sort
+  wrap.querySelectorAll("thead th[data-sort]").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = Number(th.dataset.sort);
+      if(sortState.key === key) sortState.dir *= -1;
+      else sortState = { key, dir: 1 };
+      // 검색어가 없으면 정렬할 의미 없으니 그대로
+      if(!searchInput.value.trim()){
+        renderTable([]);
+        return;
+      }
+      applySearchAndSort();
+    });
+  });
+}
 </script>
 </body>
 </html>
