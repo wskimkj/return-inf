@@ -5,107 +5,49 @@
 <title>발주서</title>
 
 <link rel="icon" type="image/png" href="android-icon-48x48.ico">
-
-<!-- 폰트 -->
 <link rel="stylesheet" as="style" crossorigin
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-
-<!-- CSV 파서 -->
+ href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 :root{
-  --bg-gradient: radial-gradient(circle at top left, #f9a8d4 0, #e5e7eb 40%, #e0f2fe 100%);
-  --card-bg: rgba(255, 255, 255, 0.96);
-  --border-soft: rgba(148, 163, 184, 0.5);
-  --accent: #2563eb;
-  --accent-soft: rgba(37, 99, 235, 0.08);
-  --text-main: #0f172a;
-  --text-sub: #64748b;
+  --bg: radial-gradient(circle at top left,#f9a8d4 0,#e5e7eb 40%,#e0f2fe 100%);
+  --card: rgba(255,255,255,.96);
+  --border: rgba(148,163,184,.45);
+  --accent:#2563eb;
+  --text:#0f172a;
+  --sub:#64748b;
 }
-
-*{box-sizing:border-box;font-family:"Pretendard",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
-body{margin:0;min-height:100vh;padding:32px 16px;color:var(--text-main);background:var(--bg-gradient);}
-.container{max-width:1200px;margin:0 auto;}
+*{box-sizing:border-box;font-family:Pretendard,system-ui}
+body{margin:0;padding:32px 16px;background:var(--bg);color:var(--text)}
+.container{max-width:1200px;margin:auto}
 .card{
-  background:var(--card-bg);
-  border-radius:18px;
-  padding:24px 24px 20px;
-  box-shadow:0 18px 45px rgba(15,23,42,0.12),0 0 0 1px rgba(148,163,184,0.35);
-  border:1px solid rgba(248,250,252,0.7);
-  backdrop-filter:blur(12px);
+  background:var(--card);border-radius:18px;padding:24px;
+  box-shadow:0 18px 45px rgba(15,23,42,.12);
 }
-.card-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;}
-.card-title{font-size:20px;font-weight:700;display:flex;gap:8px;align-items:center;}
-.card-title-badge{
-  font-size:11px;padding:3px 8px;border-radius:999px;
-  background:var(--accent-soft);color:var(--accent);
-  border:1px solid rgba(37,99,235,0.2);
+.card-title{font-size:20px;font-weight:700}
+.field{margin:14px 0}
+input{
+  width:100%;padding:10px 12px;font-size:13px;
+  border-radius:10px;border:1px solid var(--border)
 }
-.card-subtitle{font-size:12px;color:var(--text-sub);}
-
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.field input{
-  border-radius:10px;border:1px solid var(--border-soft);
-  padding:10px 12px;font-size:13px;outline:none;
-  background:rgba(248,250,252,0.9);
-}
-.field input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(37,99,235,0.14);
-  background:#fff;
-}
-
-.status{
-  font-size:11px;color:var(--text-sub);
-  display:flex;justify-content:space-between;align-items:center;
-  margin:10px 0 8px;
-}
-.status .hint{color:var(--text-sub);}
-.kbd{
-  font-size:10px;
-  padding:2px 6px;
-  border-radius:6px;
-  border:1px solid rgba(148,163,184,0.45);
-  background:rgba(248,250,252,0.9);
-  color:var(--text-main);
-  margin-left:6px;
-}
-
+.status{font-size:11px;color:var(--sub);display:flex;justify-content:space-between}
 .table-wrapper{
-  max-height:520px;
-  overflow:auto;
-  border-radius:12px;
-  border:1px solid rgba(148,163,184,0.4);
-  background:rgba(248,250,252,0.9);
+  margin-top:10px;border-radius:12px;overflow:auto;
+  border:1px solid var(--border);max-height:520px
 }
-table{width:100%;border-collapse:collapse;font-size:12px;}
-thead{
-  position:sticky;top:0;
-  background:rgba(241,245,249,0.98);
-  backdrop-filter:blur(6px);
-  z-index:1;
-}
-th,td{padding:8px 10px;border-bottom:1px solid rgba(226,232,240,0.85);vertical-align:top;}
-th{font-weight:700;color:#0b1220;}
-tbody tr:nth-child(even){background:rgba(255,255,255,0.78);}
-tbody tr:hover{background:rgba(219,234,254,0.65);}
-.no-data{padding:18px;text-align:center;font-size:12px;color:var(--text-sub);}
-
-.copy-cell{cursor:pointer;}
-.copy-cell:active{transform:translateY(0.5px);}
-
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{position:sticky;top:0;background:#f1f5f9}
+th,td{padding:8px 10px;border-bottom:1px solid #e5e7eb}
+th{cursor:pointer;user-select:none}
+tbody tr:hover{background:#dbeafe}
+.copy{cursor:pointer}
+.no-data{text-align:center;padding:20px;color:var(--sub)}
 #toast{
-  position:fixed; right:18px; bottom:18px;
-  padding:10px 12px;
-  background:rgba(15,23,42,0.92);
-  color:#fff; border-radius:12px;
-  font-size:12px;
-  box-shadow:0 18px 45px rgba(15,23,42,0.22);
-  opacity:0; transform:translateY(8px);
-  transition:.18s;
-  pointer-events:none;
-  z-index:9999;
+  position:fixed;right:16px;bottom:16px;
+  background:#0f172a;color:#fff;
+  padding:8px 12px;border-radius:10px;
+  font-size:12px;opacity:0;transition:.2s
 }
 </style>
 </head>
@@ -113,22 +55,18 @@ tbody tr:hover{background:rgba(219,234,254,0.65);}
 <body>
 <div class="container">
   <div class="card">
-    <div class="card-header">
-      <div>
-        <div class="card-title">정보 조회 <span class="card-title-badge"> 매칭 </span></div>
-      </div>
-    </div>
+    <div class="card-title">정보 조회</div>
 
     <div class="field">
-      <input id="searchInput" type="text" placeholder="검색어를 입력하세요">
+      <input id="search" placeholder="주문번호 · 수령인 · 상품명 검색 (Esc 초기화)">
     </div>
 
     <div class="status">
-      <span id="loadStatus">DB 데이터를 불러오는 중...</span>
-      <span class="hint"> <span class="kbd">Esc</span> 초기화<span id="resultCount"></span></span>
+      <span id="status">DB 로딩 중...</span>
+      <span id="count"></span>
     </div>
 
-    <div class="table-wrapper" id="tableWrapper">
+    <div class="table-wrapper" id="table">
       <div class="no-data">데이터 로딩 중...</div>
     </div>
   </div>
@@ -139,178 +77,100 @@ tbody tr:hover{background:rgba(219,234,254,0.65);}
 <script>
 const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
 
-let dataRows = [];
-const COL = {
-  ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
-  PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
-};
+const COL = { ORDER:1, MALL:2, NAME:3, INVOICE:5, PHONE:6, PRODUCT:10, QTY:11, AMOUNT:12, COLOR:18 };
+let rows = [];
+let sort = { key:null, dir:1 };
 
-// ===== 로컬 캐시(장애 대비) =====
-const CACHE_KEY = "order_csv_cache_v1";
-const CACHE_TIME_KEY = "order_csv_cache_time_v1";
-const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6시간
-
-async function fetchWithTimeout(url, timeoutMs = 8000){
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    return await res.text();
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-function saveCache(csvText){
+// ===== cache =====
+const CK="csv_cache", CT="csv_cache_time";
+async function fetchCSV(){
   try{
-    localStorage.setItem(CACHE_KEY, csvText);
-    localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
-  }catch(e){
-    console.warn("캐시 저장 실패:", e);
+    const r = await fetch(CSV_URL,{signal:AbortSignal.timeout(8000)});
+    const t = await r.text();
+    localStorage.setItem(CK,t);
+    localStorage.setItem(CT,Date.now());
+    return t;
+  }catch{
+    return localStorage.getItem(CK);
   }
 }
 
-function readCache(){
-  const csvText = localStorage.getItem(CACHE_KEY);
-  const ts = Number(localStorage.getItem(CACHE_TIME_KEY) || 0);
-  if(!csvText) return null;
-  return { csvText, ts };
-}
-
-function isCacheFresh(ts){
-  return (Date.now() - ts) <= CACHE_TTL_MS;
-}
-
-// ===== UI 유틸 =====
-function debounce(fn, wait=200){
-  let t;
-  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
-}
-
-function showToast(msg="복사됨"){
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.style.opacity = 1;
-  el.style.transform = "translateY(0)";
-  setTimeout(()=>{
-    el.style.opacity = 0;
-    el.style.transform = "translateY(8px)";
-  }, 900);
-}
-
-// ===== 데이터 로드 =====
-async function loadData(){
-  const statusEl = document.getElementById("loadStatus");
-  statusEl.textContent = "DB 데이터를 불러오는 중...";
-
-  const cached = readCache();
-
-  try {
-    const csvText = await fetchWithTimeout(CSV_URL, 8000);
-    saveCache(csvText);
-
-    Papa.parse(csvText, {
-      complete: (results)=>{
-        dataRows = results.data.slice(1).filter(r=>r && r.length>1);
-        const now = new Date();
-        statusEl.textContent = `DB 로드 완료 (총 ${dataRows.length}건)}`;
-        renderTable([]); // 검색 전엔 비워두기
-      }
-    });
-
-  } catch(err){
-    console.error("DB 로드 실패:", err);
-
-    if(cached){
-      const freshText = isCacheFresh(cached.ts) ? "캐시(최신)" : "캐시(오래됨)";
-      const when = new Date(cached.ts).toLocaleString();
-
-      Papa.parse(cached.csvText, {
-        complete: (results)=>{
-          dataRows = results.data.slice(1).filter(r=>r && r.length>1);
-          statusEl.textContent =
-            `DB 로드 실패 → ${freshText}로 조회 중 (총 ${dataRows.length}건) · 캐시저장: ${when}`;
-          renderTable([]);
-        }
-      });
-      return;
-    }
-
-    statusEl.textContent = "DB 로드 실패 (캐시 없음)";
-    document.getElementById("tableWrapper").innerHTML =
-      '<div class="no-data">데이터를 불러오지 못했습니다. 네트워크/구글시트 상태를 확인하세요.</div>';
-  }
-}
-loadData();
-
-// ===== 검색 =====
-const searchInput = document.getElementById("searchInput");
-
-function applySearch(){
-  const keyword = searchInput.value.trim().toLowerCase();
-  if(!keyword){
-    renderTable([]);
+// ===== load =====
+fetchCSV().then(csv=>{
+  if(!csv){
+    status.textContent="DB 로드 실패";
+    table.innerHTML='<div class="no-data">데이터 없음</div>';
     return;
   }
-  const filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
-  renderTable(filtered);
-}
-
-searchInput.addEventListener("input", debounce(applySearch, 200));
-searchInput.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    searchInput.value = "";
-    renderTable([]);
-  }
+  Papa.parse(csv,{
+    complete:r=>{
+      rows=r.data.slice(1).filter(v=>v.length);
+      status.textContent=`DB 로드 완료 (${rows.length}건)`;
+    }
+  });
 });
 
-// ===== 테이블 렌더 =====
-function renderTable(rows){
-  const tableWrapper = document.getElementById("tableWrapper");
-  const resultCount = document.getElementById("resultCount");
+// ===== utils =====
+function toast(){
+  const t=document.getElementById("toast");
+  t.style.opacity=1;
+  setTimeout(()=>t.style.opacity=0,800);
+}
+function num(v){return Number(String(v).replace(/[^0-9.-]/g,""))||0}
 
-  if(!rows || rows.length===0){
-    resultCount.textContent = "";
-    tableWrapper.innerHTML = '<div class="no-data">검색 결과가 없습니다.</div>';
+// ===== render =====
+function render(data){
+  if(!data.length){
+    count.textContent="";
+    table.innerHTML='<div class="no-data">검색 결과 없음</div>';
     return;
   }
-
-  resultCount.textContent = `검색 결과 ${rows.length}건`;
-
-  let html = `<table><thead><tr>
-    <th>#</th><th>주문번호</th><th>쇼핑몰</th><th>수령인</th><th>송장번호</th>
-    <th>연락처</th><th>상품명</th><th>수량</th><th>결제금액</th><th>컬러코드</th>
+  count.textContent=`${data.length}건`;
+  let h=`<table><thead><tr>
+    <th data-k="ORDER">주문번호</th>
+    <th data-k="MALL">쇼핑몰</th>
+    <th data-k="NAME">수령인</th>
+    <th data-k="INVOICE">송장번호</th>
+    <th>연락처</th>
+    <th data-k="PRODUCT">상품명</th>
+    <th data-k="QTY">수량</th>
+    <th data-k="AMOUNT">금액</th>
+    <th>컬러</th>
   </tr></thead><tbody>`;
-
-  rows.forEach((r,i)=>{
-    html += `<tr>
-      <td class="copy-cell">${i+1}</td>
-      <td class="copy-cell">${r[COL.ORDER_NO]||""}</td>
-      <td class="copy-cell">${r[COL.MALL]||""}</td>
-      <td class="copy-cell">${r[COL.RECEIVER]||""}</td>
-      <td class="copy-cell">${r[COL.INVOICE]||""}</td>
-      <td class="copy-cell">${r[COL.PHONE]||""}</td>
-      <td class="copy-cell">${r[COL.PRODUCT]||""}</td>
-      <td class="copy-cell">${r[COL.QTY]||""}</td>
-      <td class="copy-cell">${r[COL.AMOUNT]||""}</td>
-      <td class="copy-cell">${r[COL.COLOR]||""}</td>
-    </tr>`;
+  data.forEach(r=>{
+    h+=`<tr>${Object.values(COL).map(i=>`<td class="copy">${r[i]||""}</td>`).join("")}</tr>`;
   });
+  table.innerHTML=h+"</tbody></table>";
 
-  html += `</tbody></table>`;
-  tableWrapper.innerHTML = html;
-
-  // 셀 클릭 시 복사 + 토스트
-  tableWrapper.querySelectorAll(".copy-cell").forEach(cell=>{
-    cell.addEventListener("click", ()=>{
-      const text = cell.textContent.trim();
-      navigator.clipboard.writeText(text)
-        .then(()=>showToast("복사됨"))
-        .catch(err=>console.error(err));
-    });
+  table.querySelectorAll(".copy").forEach(c=>{
+    c.onclick=()=>{navigator.clipboard.writeText(c.textContent);toast();}
+  });
+  table.querySelectorAll("th[data-k]").forEach(th=>{
+    th.onclick=()=>{
+      const k=COL[th.dataset.k];
+      sort.dir = sort.key===k ? -sort.dir : 1;
+      sort.key=k;
+      apply();
+    };
   });
 }
+
+// ===== search + sort =====
+function apply(){
+  let d=[...rows];
+  const q=search.value.toLowerCase();
+  if(q) d=d.filter(r=>r.join(" ").toLowerCase().includes(q));
+  if(sort.key){
+    d.sort((a,b)=>{
+      const A=a[sort.key],B=b[sort.key];
+      return (isNaN(A)?String(A).localeCompare(B):num(A)-num(B))*sort.dir;
+    });
+  }
+  render(d);
+}
+
+search.oninput=()=>setTimeout(apply,150);
+search.onkeydown=e=>{if(e.key==="Escape"){search.value="";render([])}};
 </script>
 </body>
 </html>
