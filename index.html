@@ -11,27 +11,21 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
-/* ===================== Pastel Pink UI Theme (디자인만 교체 / 기능 그대로) ===================== */
 :root{
-  /* background */
   --page-bg: #f7f4ff;
   --page-bg2:#eef6ff;
 
-  /* surfaces */
   --card-bg: rgba(255,255,255,.86);
   --card-stroke: rgba(170,150,230,.22);
 
-  /* text */
   --text: #2f2a3a;
   --sub: #6e6a82;
   --muted: #9a96ad;
 
-  /* pink + lilac */
   --pink: #ff8fbc;
   --pink2:#ffd2e3;
   --lilac:#b8a7ff;
 
-  /* shadow */
   --shadow-main: 0 18px 50px rgba(30, 18, 60, .10);
   --shadow-card: 0 10px 26px rgba(30, 18, 60, .08);
   --shadow-soft: 0 6px 18px rgba(30, 18, 60, .06);
@@ -51,14 +45,12 @@ body{
     linear-gradient(180deg, var(--page-bg), var(--page-bg2));
 }
 
-/* container */
 .container{
   max-width: 1280px;
   margin: 0 auto;
   padding: 34px 18px 44px;
 }
 
-/* 기존 neon blob 제거(레이아웃 유지용으로만 존재) */
 .glow{
   position:fixed;
   inset:-20%;
@@ -104,6 +96,7 @@ body{
   color: var(--text);
 }
 
+/* Neon Glass pill (클릭 가능) */
 .pill{
   font-size:11px;
   padding:4px 10px;
@@ -113,10 +106,14 @@ body{
   color: rgba(47,42,58,.80);
   box-shadow: 0 1px 0 rgba(255,255,255,.55) inset;
 }
-
-.brand-sub{
-  font-size:12px;
-  color:var(--sub);
+a.pill{
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+}
+a.pill:hover{
+  border-color: rgba(255,143,188,.55);
+  box-shadow: 0 0 0 3px rgba(255,143,188,.14), 0 1px 0 rgba(255,255,255,.55) inset;
 }
 
 .meta{
@@ -149,16 +146,7 @@ body{
   box-shadow: var(--shadow-soft);
 }
 
-.kbd{
-  font-size:11px;
-  padding:4px 8px;
-  border-radius:10px;
-  border:1px solid rgba(170,150,230,.20);
-  background: rgba(255,255,255,.55);
-  color: rgba(47,42,58,.65);
-}
-
-/* card (밝은 카드형) */
+/* card */
 .card{
   position:relative;
   z-index:1;
@@ -181,7 +169,7 @@ body{
 }
 .card-inner{position:relative;padding: 18px 18px 14px;}
 
-/* search */
+/* ===================== ✅ SEARCH UI (얄쌍하게) ===================== */
 .search-row{
   display:flex;
   gap:12px;
@@ -189,38 +177,68 @@ body{
   margin: 10px 0 12px;
 }
 
+/* 🔥 두꺼운 검색창 -> 얇게 */
 .search{
   flex:1;
+  position:relative;
   display:flex;
   align-items:center;
-  gap:10px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(243,241,250,.90);
-  border: 1px solid rgba(170,150,230,.22);
-  box-shadow: var(--shadow-card);
+  gap:8px;
+  padding: 8px 44px 8px 12px; /* 오른쪽 Enter 힌트 공간 확보 */
+  border-radius: 14px;
+  background: rgba(243,241,250,.82);
+  border: 1px solid rgba(170,150,230,.20);
+  box-shadow: var(--shadow-soft);
 }
 
+/* 포커스도 덜 과하게 */
 .search:focus-within{
-  border-color: rgba(255,143,188,.60);
-  box-shadow:
-    0 0 0 4px rgba(255,143,188,.18),
-    var(--shadow-card);
+  border-color: rgba(255,143,188,.55);
+  box-shadow: 0 0 0 3px rgba(255,143,188,.16), var(--shadow-soft);
 }
 
+/* ✅ 검정 동그라미 원인: viewBox 없는 svg + stroke색 문제
+   -> 제대로 된 24px 돋보기 아이콘으로 교체 */
 .search-icon{
-  width:18px;height:18px;opacity:.85;flex:0 0 auto;
-  filter:none;
+  width:16px;
+  height:16px;
+  flex:0 0 auto;
+  opacity:.60;
+}
+.search-icon path{
+  stroke: rgba(47,42,58,.65);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
+/* input 작게 + 라인 높이 정리 */
 .search input{
   width:100%;
-  border:0; outline:0;
+  border:0;
+  outline:0;
   background:transparent;
   color:var(--text);
-  font-size:13px;
+  font-size:12.5px;
+  line-height: 1.1;
+  padding: 0;
 }
-.search input::placeholder{color: rgba(110,106,130,.60);}
+.search input::placeholder{
+  color: rgba(110,106,130,.55);
+}
+
+/* ✅ Enter ↵ 너무 큰 문제 해결 */
+.enter-hint{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform: translateY(-50%);
+  font-size:11px;
+  color: rgba(110,106,130,.60);
+  user-select:none;
+  pointer-events:none;
+}
 
 /* status */
 .status-row{
@@ -233,7 +251,6 @@ body{
   color:var(--sub);
 }
 
-/* table wrapper (밝게) */
 .table-wrap{
   border-radius:16px;
   border: 1px solid rgba(170,150,230,.18);
@@ -243,7 +260,6 @@ body{
   max-height: 560px;
 }
 
-/* table */
 table{
   width:100%;
   border-collapse:separate;
@@ -283,7 +299,6 @@ tbody tr:hover{
 .copy{cursor:pointer;}
 .copy:active{transform: translateY(0.5px);}
 
-/* sort indicator */
 .sort-ind{display:inline-flex;align-items:center;gap:6px;}
 .sort-dot{
   width:6px;height:6px;border-radius:50%;
@@ -307,7 +322,6 @@ tbody tr:hover{
   font-size:12px;
 }
 
-/* toast (밝은 버전) */
 #toast{
   position:fixed;
   right:18px;
@@ -328,13 +342,13 @@ tbody tr:hover{
 }
 #toast.show{opacity:1;transform: translateY(0);}
 
-/* responsive */
 @media (max-width: 760px){
   .topbar{flex-direction:column; align-items:flex-start;}
   .meta{white-space:normal}
   .table-wrap{max-height: 68vh;}
+  .search{ padding-right: 38px; }
+  .enter-hint{ right: 10px; }
 }
-
 </style>
 </head>
 
@@ -346,7 +360,10 @@ tbody tr:hover{
     <div class="brand">
       <div class="brand-title">
         정보 조회
-        <span class="pill">Neon Glass</span>
+        <!-- ✅ Neon Glass 뱃지 클릭 -> 구글 시트로 이동 -->
+        <a class="pill" href="https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/edit#gid=518656308" target="_blank" rel="noopener noreferrer">
+          Neon Glass
+        </a>
       </div>
     </div>
 
@@ -360,20 +377,22 @@ tbody tr:hover{
     <div class="card-inner">
       <div class="search-row">
         <div class="search">
-          <svg class="search-icon">
-            <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="rgba(255,255,255,.78)" stroke-width="1.8"/>
-            <path d="M16.5 16.5 21 21" stroke="rgba(255,111,174,.95)" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- ✅ 제대로 된 돋보기 아이콘 (검정 동그라미 해결) -->
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
+            <path d="M21 21l-4.35-4.35"></path>
           </svg>
-          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…"/>
-            <span class="input-icon-right">Enter ↵</span>
+
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
+
+          <!-- ✅ Enter 힌트 작게/얇게 -->
+          <span class="enter-hint">Enter ↵</span>
         </div>
       </div>
 
       <div class="status-row">
         <div id="cacheHint"></div>
-        <div style="display:flex; gap:10px; align-items:center;">
-    
-        </div>
+        <div style="display:flex; gap:10px; align-items:center;"></div>
       </div>
 
       <div class="table-wrap" id="tableWrapper">
@@ -455,7 +474,7 @@ function setHeaderStatus(text){
 
 function setCacheHint(text){
   $("cacheHint").textContent = text || "";
-  $("cacheHint").style.color = text ? "rgba(255,255,255,.62)" : "rgba(255,255,255,0)";
+  $("cacheHint").style.color = text ? "rgba(47,42,58,.55)" : "rgba(255,255,255,0)";
 }
 
 /* ===================== Data Load ===================== */
@@ -522,8 +541,6 @@ function applySearchAndSort(){
     filtered = [...filtered].sort((a,b)=>{
       const av = a[k] ?? "";
       const bv = b[k] ?? "";
-
-      // 수량/금액은 숫자 정렬
       if(k === COL.QTY || k === COL.AMOUNT){
         return (toNumber(av) - toNumber(bv)) * dir;
       }
@@ -609,23 +626,21 @@ function renderTable(rows){
   html += `</tbody></table>`;
   wrap.innerHTML = html;
 
-  // copy
   wrap.querySelectorAll(".copy").forEach(cell=>{
     cell.addEventListener("click", ()=>{
       const text = cell.textContent.trim();
       navigator.clipboard.writeText(text)
+        .then(()=>showToast("복사됨"))
         .catch(()=>showToast("복사 실패"));
     });
   });
 
-  // sort
   wrap.querySelectorAll("thead th[data-sort]").forEach(th=>{
     th.addEventListener("click", ()=>{
       const key = Number(th.dataset.sort);
       if(sortState.key === key) sortState.dir *= -1;
       else sortState = { key, dir: 1 };
 
-      // 검색어 없으면 표 비움 유지
       if(!searchInput.value.trim()){
         renderTable([]);
         return;
