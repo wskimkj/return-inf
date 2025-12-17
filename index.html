@@ -86,7 +86,7 @@ body{
 .card{
   position:relative;
   z-index:1;
-  background: #fff;
+  background:#fff;
   border: 1px solid var(--card-stroke);
   border-radius: 22px;
   box-shadow: var(--shadow-main);
@@ -94,6 +94,16 @@ body{
   -webkit-backdrop-filter: blur(14px);
   overflow:hidden;
 }
+.card::before{
+  content:"";
+  position:absolute; inset:-2px;
+  background:
+    radial-gradient(900px 260px at 8% 0%, rgba(255,143,188,.18), transparent 60%),
+    radial-gradient(900px 260px at 92% 0%, rgba(184,167,255,.14), transparent 55%);
+  pointer-events:none;
+  opacity:.85;
+}
+.card-inner{position:relative;padding: 18px 18px 14px;}
 
 /* Neon Glass pill (클릭 가능) */
 .pill{
