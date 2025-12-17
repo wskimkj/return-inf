@@ -368,6 +368,12 @@ tbody tr:hover{
   margin-left:6px;
 }
 
+  
+/* ===== 드래그 선택 하이라이트 ===== */
+td.sel{
+  background: rgba(255, 245, 140, .45) !important; /* 병아리 파스텔 */
+}
+
 
 @media (max-width: 760px){
   .topbar{flex-direction:column; align-items:flex-start;}
@@ -623,20 +629,21 @@ function renderTable(rows){
     </tr></thead>
     <tbody>`;
 
-  rows.forEach((r,i)=>{
-    html += `<tr>
-      <td class="copy">${i+1}</td>
-      <td class="copy">${r[COL.ORDER_NO]||""}</td>
-      <td class="copy">${r[COL.MALL]||""}</td>
-      <td class="copy">${r[COL.RECEIVER]||""}</td>
-      <td class="copy">${r[COL.INVOICE]||""}</td>
-      <td class="copy">${r[COL.PHONE]||""}</td>
-      <td class="copy">${r[COL.PRODUCT]||""}</td>
-      <td class="copy">${r[COL.QTY]||""}</td>
-      <td class="copy">${r[COL.AMOUNT]||""}</td>
-      <td class="copy">${r[COL.COLOR]||""}</td>
-    </tr>`;
-  });
+  rows.forEach((r, i)=>{
+  html += `<tr>
+    <td class="copy" data-r="${i}" data-c="0">${i+1}</td>
+    <td class="copy" data-r="${i}" data-c="1">${r[COL.ORDER_NO]||""}</td>
+    <td class="copy" data-r="${i}" data-c="2">${r[COL.MALL]||""}</td>
+    <td class="copy" data-r="${i}" data-c="3">${r[COL.RECEIVER]||""}</td>
+    <td class="copy" data-r="${i}" data-c="4">${r[COL.INVOICE]||""}</td>
+    <td class="copy" data-r="${i}" data-c="5">${r[COL.PHONE]||""}</td>
+    <td class="copy" data-r="${i}" data-c="6">${r[COL.PRODUCT]||""}</td>
+    <td class="copy" data-r="${i}" data-c="7">${r[COL.QTY]||""}</td>
+    <td class="copy" data-r="${i}" data-c="8">${r[COL.AMOUNT]||""}</td>
+    <td class="copy" data-r="${i}" data-c="9">${r[COL.COLOR]||""}</td>
+  </tr>`;
+});
+
 
   html += `</tbody></table>`;
   wrap.innerHTML = html;
@@ -664,6 +671,110 @@ function renderTable(rows){
     });
   });
 }
+
+  /* ===== Drag Select → Copy (TSV) ===== */
+(function(){
+  const wrap = document.getElementById("tableWrapper");
+  if(!wrap) return;
+
+  let table = null;
+  let dragging = false;
+  let startCell = null;
+  let endCell = null;
+
+  function clearSel(){
+    if(!table) return;
+    table.querySelectorAll("td.sel").forEach(td => td.classList.remove("sel"));
+  }
+
+  function rc(td){
+    return { r: +td.dataset.r, c: +td.dataset.c };
+  }
+
+  function paint(){
+    clearSel();
+    if(!startCell || !endCell || !table) return;
+
+    const a = rc(startCell);
+    const b = rc(endCell);
+
+    const r1 = Math.min(a.r, b.r);
+    const r2 = Math.max(a.r, b.r);
+    const c1 = Math.min(a.c, b.c);
+    const c2 = Math.max(a.c, b.c);
+
+    for(let r=r1; r<=r2; r++){
+      for(let c=c1; c<=c2; c++){
+        const td = table.querySelector(`td[data-r="${r}"][data-c="${c}"]`);
+        if(td) td.classList.add("sel");
+      }
+    }
+  }
+
+  function buildTSV(){
+    if(!startCell || !endCell || !table) return "";
+
+    const a = rc(startCell);
+    const b = rc(endCell);
+
+    const r1 = Math.min(a.r, b.r);
+    const r2 = Math.max(a.r, b.r);
+    const c1 = Math.min(a.c, b.c);
+    const c2 = Math.max(a.c, b.c);
+
+    const lines = [];
+    for(let r=r1; r<=r2; r++){
+      const row = [];
+      for(let c=c1; c<=c2; c++){
+        const td = table.querySelector(`td[data-r="${r}"][data-c="${c}"]`);
+        row.push((td?.textContent || "").trim());
+      }
+      lines.push(row.join("\t"));
+    }
+    return lines.join("\n");
+  }
+
+  function bind(){
+    table = wrap.querySelector("table");
+    if(!table) return;
+
+    table.addEventListener("mousedown", (e)=>{
+      const td = e.target.closest("td.copy");
+      if(!td) return;
+      dragging = true;
+      startCell = endCell = td;
+      paint();
+      e.preventDefault();
+    });
+
+    table.addEventListener("mousemove", (e)=>{
+      if(!dragging) return;
+      const td = e.target.closest("td.copy");
+      if(!td) return;
+      endCell = td;
+      paint();
+    });
+
+    window.addEventListener("mouseup", ()=>{
+      dragging = false;
+    });
+  }
+
+  // 테이블이 renderTable로 새로 그려질 때마다 다시 잡기
+  const obs = new MutationObserver(()=>bind());
+  obs.observe(wrap, { childList:true });
+
+  // Ctrl/Cmd + C → 선택 영역 TSV 복사
+  window.addEventListener("keydown", (e)=>{
+    if(!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "c") return;
+    const tsv = buildTSV();
+    if(!tsv) return;
+    e.preventDefault();
+    navigator.clipboard.writeText(tsv);
+  });
+
+})();
+
 </script>
 </body>
 </html>
