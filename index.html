@@ -342,6 +342,33 @@ tbody tr:hover{
 }
 #toast.show{opacity:1;transform: translateY(0);}
 
+  /* ===== Card Header (Search 스타일) ===== */
+.card-header{
+  margin-bottom: 12px;
+}
+
+.card-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.2px;
+  color: var(--text);
+}
+
+/* Search 페이지랑 톤 맞추기 */
+.title-text{
+  display:flex;
+  align-items:center;
+}
+
+/* pill 위치 자연스럽게 */
+.card-title .pill{
+  margin-left:6px;
+}
+
+
 @media (max-width: 760px){
   .topbar{flex-direction:column; align-items:flex-start;}
   .meta{white-space:normal}
@@ -356,51 +383,39 @@ tbody tr:hover{
 <div class="glow"></div>
 
 <div class="container">
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-title">
-        Information
-        <!-- ✅ Neon Glass 뱃지 클릭 -> 구글 시트로 이동 -->
-        <a class="pill" href="https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/edit#gid=518656308" target="_blank" rel="noopener noreferrer">
-         DB 이동
+  <div class="card">
+  <div class="card-inner">
+
+    <!-- ✅ 카드 안 헤더 -->
+    <div class="card-header">
+      <div class="card-title">
+        <span class="title-text">Information</span>
+        <a class="pill" href="https://docs.google.com/..." target="_blank">
+          DB 이동
         </a>
       </div>
     </div>
 
-    <div class="meta">
-      <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
-      <span class="badge"><strong id="resultCount"></strong></span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-inner">
-      <div class="search-row">
-        <div class="search">
-          <!-- ✅ 제대로 된 돋보기 아이콘 (검정 동그라미 해결) -->
-          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
-            <path d="M21 21l-4.35-4.35"></path>
-          </svg>
-
-          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
-
-          <!-- ✅ Enter 힌트 작게/얇게 -->
-          <span class="enter-hint">Enter ↵</span>
-        </div>
-      </div>
-
-      <div class="status-row">
-        <div id="cacheHint"></div>
-        <div style="display:flex; gap:10px; align-items:center;"></div>
-      </div>
-
-      <div class="table-wrap" id="tableWrapper">
-        <div class="no-data">데이터 로딩 중…</div>
+    <!-- ✅ 검색 영역 -->
+    <div class="search-row">
+      <div class="search">
+        <svg class="search-icon" viewBox="0 0 24 24">
+          <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
+          <path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
+        <span class="enter-hint">Enter ↵</span>
       </div>
     </div>
+
+    <!-- 테이블 -->
+    <div class="table-wrap" id="tableWrapper">
+      <div class="no-data">데이터 로딩 중…</div>
+    </div>
+
   </div>
 </div>
+
 
 <div id="toast">복사됨</div>
 
