@@ -74,78 +74,6 @@ body{
   background: radial-gradient(circle at 30% 30%, rgba(184,167,255,.50), transparent 62%);
 }
 
-/* top bar */
-.topbar{
-  position:relative;
-  z-index:1;
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:16px;
-  margin-bottom:14px;
-}
-
-.brand{display:flex;flex-direction:column;gap:6px;}
-.brand-title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:20px;
-  font-weight:800;
-  letter-spacing:-.2px;
-  color: var(--text);
-}
-
-/* Neon Glass pill (클릭 가능) */
-.pill{
-  font-size:11px;
-  padding:4px 10px;
-  border-radius:999px;
-  background: linear-gradient(90deg, rgba(255,143,188,.22), rgba(184,167,255,.18));
-  border:1px solid rgba(170,150,230,.25);
-  color: rgba(47,42,58,.80);
-  box-shadow: 0 1px 0 rgba(255,255,255,.55) inset;
-}
-a.pill{
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-}
-a.pill:hover{
-  border-color: rgba(255,143,188,.55);
-  box-shadow: 0 0 0 3px rgba(255,143,188,.14), 0 1px 0 rgba(255,255,255,.55) inset;
-}
-
-.meta{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:var(--sub);
-  font-size:12px;
-  white-space:nowrap;
-}
-
-.dot{
-  width:7px;height:7px;border-radius:50%;
-  background: rgba(154,150,173,.35);
-  box-shadow: 0 0 0 1px rgba(154,150,173,.20) inset;
-}
-.dot.live{
-  background: var(--pink);
-  box-shadow: 0 0 0 3px rgba(255,143,188,.20);
-}
-
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.55);
-  border:1px solid rgba(170,150,230,.18);
-  box-shadow: var(--shadow-soft);
-}
-
 /* card */
 .card{
   position:relative;
@@ -169,36 +97,94 @@ a.pill:hover{
 }
 .card-inner{position:relative;padding: 18px 18px 14px;}
 
-/* ===================== ✅ SEARCH UI (얄쌍하게) ===================== */
+/* Neon Glass pill (클릭 가능) */
+.pill{
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(255,143,188,.22), rgba(184,167,255,.18));
+  border:1px solid rgba(170,150,230,.25);
+  color: rgba(47,42,58,.80);
+  box-shadow: 0 1px 0 rgba(255,255,255,.55) inset;
+}
+a.pill{
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+}
+a.pill:hover{
+  border-color: rgba(255,143,188,.55);
+  box-shadow: 0 0 0 3px rgba(255,143,188,.14), 0 1px 0 rgba(255,255,255,.55) inset;
+}
+
+/* ===== Card Header ===== */
+.card-header{ margin-bottom: 12px; }
+
+.card-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.2px;
+  color: var(--text);
+}
+.card-title .pill{ margin-left:6px; }
+
+.header-meta{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color: rgba(110,106,130,.80);
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.55);
+  border:1px solid rgba(170,150,230,.18);
+  box-shadow: var(--shadow-soft);
+}
+
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background: rgba(154,150,173,.35);
+  box-shadow: 0 0 0 1px rgba(154,150,173,.20) inset;
+}
+.dot.live{
+  background: var(--pink);
+  box-shadow: 0 0 0 3px rgba(255,143,188,.20);
+}
+
+/* ===================== SEARCH UI ===================== */
 .search-row{
   display:flex;
   gap:12px;
   align-items:center;
   margin: 10px 0 12px;
 }
-
-/* 🔥 두꺼운 검색창 -> 얇게 */
 .search{
   flex:1;
   position:relative;
   display:flex;
   align-items:center;
   gap:8px;
-  padding: 8px 44px 8px 12px; /* 오른쪽 Enter 힌트 공간 확보 */
+  padding: 8px 44px 8px 12px;
   border-radius: 14px;
   background: rgba(243,241,250,.82);
   border: 1px solid rgba(170,150,230,.20);
   box-shadow: var(--shadow-soft);
 }
-
-/* 포커스도 덜 과하게 */
 .search:focus-within{
   border-color: rgba(255,143,188,.55);
   box-shadow: 0 0 0 3px rgba(255,143,188,.16), var(--shadow-soft);
 }
 
-/* ✅ 검정 동그라미 원인: viewBox 없는 svg + stroke색 문제
-   -> 제대로 된 24px 돋보기 아이콘으로 교체 */
 .search-icon{
   width:16px;
   height:16px;
@@ -213,7 +199,6 @@ a.pill:hover{
   stroke-linejoin: round;
 }
 
-/* input 작게 + 라인 높이 정리 */
 .search input{
   width:100%;
   border:0;
@@ -224,11 +209,8 @@ a.pill:hover{
   line-height: 1.1;
   padding: 0;
 }
-.search input::placeholder{
-  color: rgba(110,106,130,.55);
-}
+.search input::placeholder{ color: rgba(110,106,130,.55); }
 
-/* ✅ Enter ↵ 너무 큰 문제 해결 */
 .enter-hint{
   position:absolute;
   right:12px;
@@ -240,17 +222,7 @@ a.pill:hover{
   pointer-events:none;
 }
 
-/* status */
-.status-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:10px;
-  font-size:12px;
-  color:var(--sub);
-}
-
+/* table */
 .table-wrap{
   border-radius:16px;
   border: 1px solid rgba(170,150,230,.18);
@@ -322,6 +294,7 @@ tbody tr:hover{
   font-size:12px;
 }
 
+/* toast */
 #toast{
   position:fixed;
   right:18px;
@@ -342,42 +315,12 @@ tbody tr:hover{
 }
 #toast.show{opacity:1;transform: translateY(0);}
 
-  /* ===== Card Header (Search 스타일) ===== */
-.card-header{
-  margin-bottom: 12px;
-}
-
-.card-title{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:-.2px;
-  color: var(--text);
-}
-
-/* Search 페이지랑 톤 맞추기 */
-.title-text{
-  display:flex;
-  align-items:center;
-}
-
-/* pill 위치 자연스럽게 */
-.card-title .pill{
-  margin-left:6px;
-}
-
-  
 /* ===== 드래그 선택 하이라이트 ===== */
 td.sel{
-  background: rgba(255, 245, 140, .45) !important; /* 병아리 파스텔 */
+  background: rgba(255, 245, 140, .45) !important;
 }
 
-
 @media (max-width: 760px){
-  .topbar{flex-direction:column; align-items:flex-start;}
-  .meta{white-space:normal}
   .table-wrap{max-height: 68vh;}
   .search{ padding-right: 38px; }
   .enter-hint{ right: 10px; }
@@ -390,44 +333,51 @@ td.sel{
 
 <div class="container">
   <div class="card">
-  <div class="card-inner">
+    <div class="card-inner">
 
-    <!-- ✅ 카드 안 헤더 -->
-    <div class="card-header">
-      <div class="card-title">
-        <span class="title-text">Information</span>
-        <a class="pill" href="https://docs.google.com/..." target="_blank">
-          DB 이동
-        </a>
+      <div class="card-header">
+        <div class="card-title">
+          <span class="title-text">Information</span>
+          <a class="pill" id="dbLink" href="#" target="_blank" rel="noopener noreferrer">DB 이동</a>
+        </div>
+
+        <!-- ✅ JS가 쓰는 id들 복구 -->
+        <div class="header-meta">
+          <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
+          <span class="badge"><strong id="resultCount"></strong></span>
+          <span class="badge" id="cacheHint" style="display:none;"></span>
+        </div>
       </div>
-    </div>
 
-    <!-- ✅ 검색 영역 -->
-    <div class="search-row">
-      <div class="search">
-        <svg class="search-icon" viewBox="0 0 24 24">
-          <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
-          <path d="M21 21l-4.35-4.35"></path>
-        </svg>
-        <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
-        <span class="enter-hint">Enter ↵</span>
+      <div class="search-row">
+        <div class="search">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
+            <path d="M21 21l-4.35-4.35"></path>
+          </svg>
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
+          <span class="enter-hint">Enter ↵</span>
+        </div>
       </div>
-    </div>
 
-    <!-- 테이블 -->
-    <div class="table-wrap" id="tableWrapper">
-      <div class="no-data">데이터 로딩 중…</div>
-    </div>
+      <div class="table-wrap" id="tableWrapper">
+        <div class="no-data">데이터 로딩 중…</div>
+      </div>
 
+    </div>
   </div>
 </div>
-
 
 <div id="toast">복사됨</div>
 
 <script>
-/* ===================== Config ===================== */
+/* ===================== ✅ Config ===================== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
+
+/* ✅ 여기에 네 진짜 DB 이동 링크 넣어 */
+const DB_SHEET_LINK = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/edit#gid=518656308";
+
+document.getElementById("dbLink").href = DB_SHEET_LINK;
 
 const COL = {
   ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
@@ -490,12 +440,20 @@ function toNumber(v){
 }
 
 function setHeaderStatus(text){
-  $("loadStatus").textContent = text;
+  const el = $("loadStatus");
+  if(el) el.textContent = text;
 }
 
 function setCacheHint(text){
-  $("cacheHint").textContent = text || "";
-  $("cacheHint").style.color = text ? "rgba(47,42,58,.55)" : "rgba(255,255,255,0)";
+  const el = $("cacheHint");
+  if(!el) return;
+  if(!text){
+    el.style.display = "none";
+    el.textContent = "";
+    return;
+  }
+  el.style.display = "inline-flex";
+  el.textContent = text;
 }
 
 /* ===================== Data Load ===================== */
@@ -630,24 +588,24 @@ function renderTable(rows){
     <tbody>`;
 
   rows.forEach((r, i)=>{
-  html += `<tr>
-    <td class="copy" data-r="${i}" data-c="0">${i+1}</td>
-    <td class="copy" data-r="${i}" data-c="1">${r[COL.ORDER_NO]||""}</td>
-    <td class="copy" data-r="${i}" data-c="2">${r[COL.MALL]||""}</td>
-    <td class="copy" data-r="${i}" data-c="3">${r[COL.RECEIVER]||""}</td>
-    <td class="copy" data-r="${i}" data-c="4">${r[COL.INVOICE]||""}</td>
-    <td class="copy" data-r="${i}" data-c="5">${r[COL.PHONE]||""}</td>
-    <td class="copy" data-r="${i}" data-c="6">${r[COL.PRODUCT]||""}</td>
-    <td class="copy" data-r="${i}" data-c="7">${r[COL.QTY]||""}</td>
-    <td class="copy" data-r="${i}" data-c="8">${r[COL.AMOUNT]||""}</td>
-    <td class="copy" data-r="${i}" data-c="9">${r[COL.COLOR]||""}</td>
-  </tr>`;
-});
-
+    html += `<tr>
+      <td class="copy" data-r="${i}" data-c="0">${i+1}</td>
+      <td class="copy" data-r="${i}" data-c="1">${r[COL.ORDER_NO]||""}</td>
+      <td class="copy" data-r="${i}" data-c="2">${r[COL.MALL]||""}</td>
+      <td class="copy" data-r="${i}" data-c="3">${r[COL.RECEIVER]||""}</td>
+      <td class="copy" data-r="${i}" data-c="4">${r[COL.INVOICE]||""}</td>
+      <td class="copy" data-r="${i}" data-c="5">${r[COL.PHONE]||""}</td>
+      <td class="copy" data-r="${i}" data-c="6">${r[COL.PRODUCT]||""}</td>
+      <td class="copy" data-r="${i}" data-c="7">${r[COL.QTY]||""}</td>
+      <td class="copy" data-r="${i}" data-c="8">${r[COL.AMOUNT]||""}</td>
+      <td class="copy" data-r="${i}" data-c="9">${r[COL.COLOR]||""}</td>
+    </tr>`;
+  });
 
   html += `</tbody></table>`;
   wrap.innerHTML = html;
 
+  // 단일 셀 클릭 복사(원래 기능 유지)
   wrap.querySelectorAll(".copy").forEach(cell=>{
     cell.addEventListener("click", ()=>{
       const text = cell.textContent.trim();
@@ -657,6 +615,7 @@ function renderTable(rows){
     });
   });
 
+  // 정렬
   wrap.querySelectorAll("thead th[data-sort]").forEach(th=>{
     th.addEventListener("click", ()=>{
       const key = Number(th.dataset.sort);
@@ -672,7 +631,7 @@ function renderTable(rows){
   });
 }
 
-  /* ===== Drag Select → Copy (TSV) ===== */
+/* ===================== Drag Select → MouseUp Auto Copy ===================== */
 (function(){
   const wrap = document.getElementById("tableWrapper");
   if(!wrap) return;
@@ -681,6 +640,7 @@ function renderTable(rows){
   let dragging = false;
   let startCell = null;
   let endCell = null;
+  let didDrag = false;
 
   function clearSel(){
     if(!table) return;
@@ -734,6 +694,17 @@ function renderTable(rows){
     return lines.join("\n");
   }
 
+  async function copySelection(){
+    const tsv = buildTSV();
+    if(!tsv) return;
+    try{
+      await navigator.clipboard.writeText(tsv);
+      showToast("드래그 영역 복사됨");
+    }catch{
+      showToast("복사 실패");
+    }
+  }
+
   function bind(){
     table = wrap.querySelector("table");
     if(!table) return;
@@ -742,6 +713,7 @@ function renderTable(rows){
       const td = e.target.closest("td.copy");
       if(!td) return;
       dragging = true;
+      didDrag = false;
       startCell = endCell = td;
       paint();
       e.preventDefault();
@@ -751,30 +723,27 @@ function renderTable(rows){
       if(!dragging) return;
       const td = e.target.closest("td.copy");
       if(!td) return;
+      if(td !== endCell) didDrag = true;
       endCell = td;
       paint();
     });
 
-    window.addEventListener("mouseup", ()=>{
+    window.addEventListener("mouseup", async ()=>{
+      if(!dragging) return;
       dragging = false;
+
+      // ✅ 마우스 놓으면 자동 복사 (드래그로 영역이 생긴 경우만)
+      if(didDrag){
+        await copySelection();
+      }
     });
   }
 
-  // 테이블이 renderTable로 새로 그려질 때마다 다시 잡기
+  // renderTable로 테이블이 새로 그려질 때마다 재바인드
   const obs = new MutationObserver(()=>bind());
   obs.observe(wrap, { childList:true });
 
-  // Ctrl/Cmd + C → 선택 영역 TSV 복사
-  window.addEventListener("keydown", (e)=>{
-    if(!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "c") return;
-    const tsv = buildTSV();
-    if(!tsv) return;
-    e.preventDefault();
-    navigator.clipboard.writeText(tsv);
-  });
-
 })();
-
 </script>
 </body>
 </html>
