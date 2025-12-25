@@ -44,15 +44,14 @@ body{
     linear-gradient(180deg, var(--page-bg), var(--page-bg2));
 }
 
-  .inner-shell{
-   background:var(--card-bg);
+.inner-shell{
+  background:var(--card-bg);
   border: 1px solid solid var(--card-stroke);
   box-shadow:
     0 18px 50px rgba(30,18,60,.10),
     inset 0 1px 0 rgba(255,255,255,.6);
 }
 
-  
 .container{
   max-width: 1280px;
   margin: 0 auto;
@@ -349,7 +348,6 @@ td.sel{
           <a class="pill" id="dbLink" href="#" target="_blank" rel="noopener noreferrer">DB 이동</a>
         </div>
 
-        <!-- ✅ JS가 쓰는 id들 복구 -->
         <div class="header-meta">
           <span class="badge"><span class="dot live"></span><span id="loadStatus">DB 로딩 중...</span></span>
           <span class="badge"><strong id="resultCount"></strong></span>
@@ -363,7 +361,7 @@ td.sel{
             <path d="M11 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"></path>
             <path d="M21 21l-4.35-4.35"></path>
           </svg>
-          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명…" />
+          <input id="searchInput" type="text" placeholder="주문번호, 수령인, 상품명… (Enter로 검색)" />
           <span class="enter-hint">Enter ↵</span>
         </div>
       </div>
@@ -379,33 +377,30 @@ td.sel{
 <div id="toast">복사됨</div>
 
 <script>
-/* ===================== ✅ Config ===================== */
+/* ===================== Config ===================== */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
-
-/* ✅ 여기에 네 진짜 DB 이동 링크 넣어 */
 const DB_SHEET_LINK = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/edit#gid=518656308";
-
 document.getElementById("dbLink").href = DB_SHEET_LINK;
 
-
-  const COL = {
-  ORDER_NO: 2,  // (기존 1 -> 2)
-  MALL: 3,      // (기존 2 -> 3)
-  RECEIVER: 4,  // (기존 3 -> 4)
-  INVOICE: 6,   // (기존 5 -> 6)
-  PHONE: 7,     // (기존 6 -> 7)
-  PRODUCT: 11,  // (기존 10 -> 11)
-  QTY: 12,      // (기존 11 -> 12)
-  AMOUNT: 13,   // (기존 12 -> 13)
-  COLOR: 19     // (기존 18 -> 19)18
+/* ✅ A열 추가 반영된 인덱스 */
+const COL = {
+  ORDER_NO: 2,
+  MALL: 3,
+  RECEIVER: 4,
+  INVOICE: 6,
+  PHONE: 7,
+  PRODUCT: 11,
+  QTY: 12,
+  AMOUNT: 13,
+  COLOR: 19
 };
 
 let dataRows = [];
 let sortState = { key: null, dir: 1 };
 
 /* ===================== Cache (Local) ===================== */
-const CACHE_KEY = "order_csv_cache_v2";
-const CACHE_TIME_KEY = "order_csv_cache_time_v2";
+const CACHE_KEY = "order_csv_cache_v3";
+const CACHE_TIME_KEY = "order_csv_cache_time_v3";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
 
 async function fetchWithTimeout(url, timeoutMs = 8000){
@@ -439,10 +434,6 @@ function isCacheFresh(ts){ return (Date.now() - ts) <= CACHE_TTL_MS; }
 /* ===================== UI Helpers ===================== */
 const $ = (id)=>document.getElementById(id);
 
-function debounce(fn, wait=180){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
-}
-
 function showToast(msg="복사됨"){
   const el = $("toast");
   el.textContent = msg;
@@ -472,7 +463,17 @@ function setCacheHint(text){
   el.textContent = text;
 }
 
-/* ===================== Data Load ===================== */
+/* ===================== Data Load (빠른 검색 캐시 포함) ===================== */
+function preprocessRows(rows){
+  // ✅ 각 행에 검색용 문자열 캐시를 1회만 생성
+  return rows
+    .filter(r => r && r.length > 1)
+    .map(r => {
+      r._hay = r.join(" ").toLowerCase();
+      return r;
+    });
+}
+
 async function loadData(){
   setHeaderStatus("DB 로딩 중...");
   setCacheHint("");
@@ -485,7 +486,7 @@ async function loadData(){
 
     Papa.parse(csvText, {
       complete: (results)=>{
-        dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+        dataRows = preprocessRows((results.data || []).slice(1));
         setHeaderStatus(`${dataRows.length.toLocaleString()}건`);
         renderTable([]); // 검색 전엔 비움
       }
@@ -501,7 +502,7 @@ async function loadData(){
 
       Papa.parse(cached.csvText, {
         complete: (results)=>{
-          dataRows = results.data.slice(1).filter(r => r && r.length > 1);
+          dataRows = preprocessRows((results.data || []).slice(1));
           renderTable([]);
         }
       });
@@ -515,7 +516,7 @@ async function loadData(){
 }
 loadData();
 
-/* ===================== Search + Sort ===================== */
+/* ===================== Search + Sort (Enter로만 검색) ===================== */
 const searchInput = $("searchInput");
 let currentRows = [];
 
@@ -524,7 +525,8 @@ function applySearchAndSort(){
 
   let filtered = dataRows;
   if(keyword){
-    filtered = dataRows.filter(row => row.join(" ").toLowerCase().includes(keyword));
+    // ✅ join/toLowerCase 반복 제거: _hay 캐시 사용
+    filtered = dataRows.filter(row => (row._hay || "").includes(keyword));
   }else{
     renderTable([]);
     return;
@@ -547,8 +549,12 @@ function applySearchAndSort(){
   renderTable(currentRows);
 }
 
-searchInput.addEventListener("input", debounce(applySearchAndSort, 180));
+// ✅ Enter로만 검색
 searchInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    applySearchAndSort();
+  }
   if(e.key === "Escape"){
     searchInput.value = "";
     sortState = { key: null, dir: 1 };
@@ -631,7 +637,7 @@ function renderTable(rows){
     });
   });
 
-  // 정렬
+  // 정렬(정렬 후에는 Enter 없이 즉시 재적용)
   wrap.querySelectorAll("thead th[data-sort]").forEach(th=>{
     th.addEventListener("click", ()=>{
       const key = Number(th.dataset.sort);
@@ -748,17 +754,14 @@ function renderTable(rows){
       if(!dragging) return;
       dragging = false;
 
-      // ✅ 마우스 놓으면 자동 복사 (드래그로 영역이 생긴 경우만)
       if(didDrag){
         await copySelection();
       }
     });
   }
 
-  // renderTable로 테이블이 새로 그려질 때마다 재바인드
   const obs = new MutationObserver(()=>bind());
   obs.observe(wrap, { childList:true });
-
 })();
 </script>
 </body>
