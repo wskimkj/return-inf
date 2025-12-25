@@ -387,9 +387,17 @@ const DB_SHEET_LINK = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6Jbh
 
 document.getElementById("dbLink").href = DB_SHEET_LINK;
 
-const COL = {
-  ORDER_NO: 1, MALL: 2, RECEIVER: 3, INVOICE: 5, PHONE: 6,
-  PRODUCT: 10, QTY: 11, AMOUNT: 12, COLOR: 18
+
+  const COL = {
+  ORDER_NO: 2,  // (기존 1 -> 2)
+  MALL: 3,      // (기존 2 -> 3)
+  RECEIVER: 4,  // (기존 3 -> 4)
+  INVOICE: 6,   // (기존 5 -> 6)
+  PHONE: 7,     // (기존 6 -> 7)
+  PRODUCT: 11,  // (기존 10 -> 11)
+  QTY: 12,      // (기존 11 -> 12)
+  AMOUNT: 13,   // (기존 12 -> 13)
+  COLOR: 19     // (기존 18 -> 19)18
 };
 
 let dataRows = [];
