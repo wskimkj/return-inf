@@ -379,35 +379,44 @@ td.sel{
 
 <script>
 /* ===================== Config ===================== */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/export?format=csv&gid=518656308";
-const DB_SHEET_LINK = "https://docs.google.com/spreadsheets/d/1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o/edit#gid=518656308";
+const SHEET_ID = "1_Bxfag-90U6u-6JbhxNqeoD9vRns-CpPeXPIJYO1Z5o";
+const GID = 518656308;
+
+// ✅ GViz: 필요한 컬럼만 내려받기 (속도 핵심)
+// select C,D,E,G,H,L,M,N,T  (주문번호, 쇼핑몰, 수령인, 송장, 연락처, 상품명, 수량, 결제금액, 컬러코드)
+const CSV_URL =
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
+  `gid=${GID}&tqx=out:csv&tq=${encodeURIComponent("select C,D,E,G,H,L,M,N,T")}`;
+
+const DB_SHEET_LINK = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GID}`;
 document.getElementById("dbLink").href = DB_SHEET_LINK;
 
-/* ✅ A열 추가 반영된 인덱스 */
+/* ✅ GViz로 내려받은 CSV는 9컬럼(0~8) */
 const COL = {
-  ORDER_NO: 2,
-  MALL: 3,
-  RECEIVER: 4,
-  INVOICE: 6,
-  PHONE: 7,
-  PRODUCT: 11,
-  QTY: 12,
-  AMOUNT: 13,
-  COLOR: 19
+  ORDER_NO: 0,  // C
+  MALL:     1,  // D
+  RECEIVER: 2,  // E
+  INVOICE:  3,  // G
+  PHONE:    4,  // H
+  PRODUCT:  5,  // L
+  QTY:      6,  // M
+  AMOUNT:   7,  // N
+  COLOR:    8   // T
 };
 
 let dataRows = [];
 let sortState = { key: null, dir: 1 };
 
 /* ===================== Cache (Local) ===================== */
-const CACHE_KEY = "order_csv_cache_v4";
-const CACHE_TIME_KEY = "order_csv_cache_time_v4";
+// ✅ URL/컬럼 구조가 바뀌었으니 캐시 키도 버전업 추천
+const CACHE_KEY = "order_csv_cache_gviz_v1";
+const CACHE_TIME_KEY = "order_csv_cache_time_gviz_v1";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h
 
 /* ✅ 캐시가 있으면 먼저 표시하고(즉시 사용 가능), 뒤에서 최신 갱신 */
 const USE_STALE_WHILE_REVALIDATE = true;
 
-/* ✅ 구글 export가 가끔 HTML(로그인) 반환하는 경우 감지 */
+/* ✅ gviz도 가끔 HTML 반환 가능 감지 */
 function looksLikeBadCsv(text){
   const t = String(text || "").trim();
   if(!t) return true;
@@ -494,17 +503,9 @@ function setCacheHint(text){
 
 /* ===================== Data Load (최적화) ===================== */
 function preprocessRows(rows){
-  // ✅ 검색용 문자열: join() 금지(비싸서) → 필요한 컬럼만 합치기
-  // 기능은 동일(주문번호/수령인/상품명/쇼핑몰 등으로 검색)
-  return rows
-    .filter(r => r && r.length > 1)
-    .map(r => {
-      const hay =
-        `${r[COL.ORDER_NO]||""} ${r[COL.MALL]||""} ${r[COL.RECEIVER]||""} ${r[COL.INVOICE]||""} ${r[COL.PHONE]||""} ${r[COL.PRODUCT]||""} ${r[COL.COLOR]||""}`
-        .toLowerCase();
-      r._hay = hay;
-      return r;
-    });
+  // ✅ 여기서 _hay 만들지 않음 (검색 전 로딩 속도 개선)
+  // rows는 그냥 array 그대로 들고 있음
+  return rows.filter(r => r && r.length > 1);
 }
 
 /* ✅ PapaParse를 worker로 돌려 UI 멈춤 줄이기 */
@@ -519,9 +520,14 @@ function parseCsv(csvText){
 }
 
 function applyParsedData(results, sourceLabel){
+  // 첫 행(header)은 gviz csv도 포함될 수 있어서 그대로 slice(1)
   dataRows = preprocessRows((results.data || []).slice(1));
+
+  // ✅ 3만건이면 로딩이 “완료”로 빨리 바뀌는 게 중요
   setHeaderStatus(`${dataRows.length.toLocaleString()}건${sourceLabel ? " · " + sourceLabel : ""}`);
-  renderTable([]); // 검색 전엔 비움(원래 동작 유지)
+
+  // 검색 전엔 비움(원래 동작 유지)
+  renderTable([]);
 }
 
 /* ✅ 캐시 먼저 렌더 → 최신 갱신(백그라운드) */
@@ -577,13 +583,24 @@ loadData();
 const searchInput = $("searchInput");
 let currentRows = [];
 
+/* ✅ 검색할 때만 _hay를 lazy 생성 */
+function ensureHay_(row){
+  if(row._hay) return row._hay;
+  // 필요한 컬럼만 합쳐서 검색 문자열 생성
+  const hay =
+    `${row[COL.ORDER_NO]||""} ${row[COL.MALL]||""} ${row[COL.RECEIVER]||""} ${row[COL.INVOICE]||""} ${row[COL.PHONE]||""} ${row[COL.PRODUCT]||""} ${row[COL.COLOR]||""}`
+    .toLowerCase();
+  row._hay = hay;
+  return hay;
+}
+
 function applySearchAndSort(){
   const keyword = searchInput.value.trim().toLowerCase();
 
   let filtered = dataRows;
   if(keyword){
-    // ✅ _hay 캐시 사용(기존과 동일 기능)
-    filtered = dataRows.filter(row => (row._hay || "").includes(keyword));
+    // ✅ 여기서만 _hay 생성됨 (검색 전에는 0)
+    filtered = dataRows.filter(row => ensureHay_(row).includes(keyword));
   }else{
     renderTable([]);
     return;
